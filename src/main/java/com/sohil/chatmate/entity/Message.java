@@ -1,13 +1,11 @@
 package com.sohil.chatmate.entity;
 
 import com.sohil.chatmate.enums.MessageStatus;
-import com.sohil.chatmate.enums.MessageType;
+import com.sohil.chatmate.enums.ContentType;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 
@@ -15,7 +13,8 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Builder
-public class Messages {
+@Table(name = "messages")
+public class Message {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -37,8 +36,8 @@ public class Messages {
 //    @Column(name = "media")
 //    MultipartFile media;
 
-    @Column(name = "type")
-    MessageType type;
+    @Column(name = "content_type")
+    ContentType contentType;
 
     @Column(name = "status")
     MessageStatus status;

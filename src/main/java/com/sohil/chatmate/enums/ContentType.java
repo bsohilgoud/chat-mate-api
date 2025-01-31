@@ -1,5 +1,5 @@
 package com.sohil.chatmate.enums;
 
-public enum MessageType {
+public enum ContentType {
     FILE, MESSAGE;
 }

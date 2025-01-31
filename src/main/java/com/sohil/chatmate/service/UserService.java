@@ -25,9 +25,14 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
+
     }
 
     public Optional<User> findUserByUsername(String username) {
         return userRepository.findUserByUsername(username);
+    }
+
+    public Optional<User> findByUserId(String receiverId) {
+        return userRepository.findById(receiverId);
     }
 }

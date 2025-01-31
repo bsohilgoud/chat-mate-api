@@ -15,14 +15,14 @@ public class AuthLoginFilter implements Filter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpSession session = httpRequest.getSession(false);
-
-        if (session != null) {
-            System.out.println("Authenticated session ID: "+  session.getId());
-        } else {
-            System.out.println(String.format("No session found for request: [{}] {}", httpRequest.getMethod(), httpRequest.getRequestURI()));
-        }
+//        HttpServletRequest httpRequest = (HttpServletRequest) request;
+//        HttpSession session = httpRequest.getSession(false);
+//
+//        if (session != null) {
+//            System.out.println("Authenticated session ID: "+  session.getId());
+//        } else {
+//            System.out.println(String.format("No session found for request: [{}] {}", httpRequest.getMethod(), httpRequest.getRequestURI()));
+//        }
 
         chain.doFilter(request, response);
     }
