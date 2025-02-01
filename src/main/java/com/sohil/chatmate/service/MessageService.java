@@ -11,6 +11,10 @@ public class MessageService {
 
     MessageRepository messageRepository;
 
+    public MessageService(MessageRepository messageRepository) {
+        this.messageRepository = messageRepository;
+    }
+
     public Message saveMessage(UserMessageDTO userMessageDTO) {
         Message message = Message.builder()
                 .senderId(userMessageDTO.senderId())
@@ -18,7 +22,8 @@ public class MessageService {
                 .content(userMessageDTO.content())
                 .contentType(userMessageDTO.type())
                 .status(MessageStatus.PENDING)
-                .timestamp(userMessageDTO.timestamp()).build();
+                .timestamp(userMessageDTO.timestamp())
+                .build();
 
         return messageRepository.save(message);
     }

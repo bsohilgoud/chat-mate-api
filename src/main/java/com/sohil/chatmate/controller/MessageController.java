@@ -8,6 +8,7 @@ import com.sohil.chatmate.service.MessageService;
 import com.sohil.chatmate.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
@@ -28,13 +29,14 @@ public class MessageController {
         this.messageService = messageService;
     }
 
-    @MessageMapping("/chat-mate/queue/connected")
-    public void userConnected(){
-
+    @MessageMapping("/queue/connected")
+    public UserMessageDTO userConnected(@Payload UserMessageDTO userMessageDTO) {
+        return userMessageDTO;
     }
 
-    @MessageMapping("/chat-mate/queue/private")
-    public void sendPrivateMessage(UserMessageDTO userMessage){
+    // TIP: We don't need to specific the application prefix again here (/chat-mate/queue/)
+    @MessageMapping("/queue/private")
+    public void sendPrivateMessage(@Payload UserMessageDTO userMessage) {
         String receiverId = userMessage.receiverId();
 
         System.out.println("receiverId = " + receiverId);
@@ -45,11 +47,13 @@ public class MessageController {
         if (optionalReceiverUser.isEmpty())
             ResponseEntity.badRequest();
 
-        System.out.println("optionalReceiverUser.get().getUserID() = " + optionalReceiverUser.get().getUserID());
-        System.out.println("optionalReceiverUser.get().getDisplayName() = " + optionalReceiverUser.get().getDisplayName());
         Message savedMessage = messageService.saveMessage(userMessage);
 
-        simpMessagingTemplate.convertAndSend("/user/queue/private/" + receiverId, userMessage);
+        String destination = "/queue/private/" + receiverId;
+        System.out.println("Sending message to destination: " + destination);
+
+        // TIP: Since we are not using the sendToUser the subscription and destination should not include /user
+        simpMessagingTemplate.convertAndSend(destination, userMessage);
 
         messageService.updateMessageStatus(savedMessage.getId(), MessageStatus.DELIVERED);
     }
