@@ -37,9 +37,12 @@ public class Message {
 //    MultipartFile media;
 
     @Column(name = "content_type")
+    @Enumerated(EnumType.STRING)
     ContentType contentType;
 
+
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     MessageStatus status;
 
 }

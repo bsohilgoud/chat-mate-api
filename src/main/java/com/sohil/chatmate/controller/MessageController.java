@@ -55,6 +55,7 @@ public class MessageController {
         // TIP: Since we are not using the sendToUser the subscription and destination should not include /user
         simpMessagingTemplate.convertAndSend(destination, userMessage);
 
+        System.out.println("updating status of message with id: = " + savedMessage.getId());
         messageService.updateMessageStatus(savedMessage.getId(), MessageStatus.DELIVERED);
     }
 }

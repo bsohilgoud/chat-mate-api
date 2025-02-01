@@ -26,4 +26,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // TIP: Don't forgot the '/'
         registry.setApplicationDestinationPrefixes("/chat-mate");
     }
+
 }
