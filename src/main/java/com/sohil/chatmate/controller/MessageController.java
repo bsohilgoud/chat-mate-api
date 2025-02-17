@@ -29,10 +29,10 @@ public class MessageController {
         this.messageService = messageService;
     }
 
-    @MessageMapping("/queue/connected")
-    public UserMessageDTO userConnected(@Payload UserMessageDTO userMessageDTO) {
-        return userMessageDTO;
-    }
+//    @MessageMapping("/queue/connected")
+//    public UserMessageDTO userConnected(@Payload UserMessageDTO userMessageDTO) {
+//        return userMessageDTO;
+//    }
 
     // TIP: We don't need to specific the application prefix again here (/chat-mate/queue/)
     @MessageMapping("/queue/private")

@@ -1,10 +1,13 @@
 package com.sohil.chatmate.service;
 
+import com.sohil.chatmate.dto.UserDetailDTO;
 import com.sohil.chatmate.dto.UserRegistrationDTO;
 import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -34,5 +37,15 @@ public class UserService {
 
     public Optional<User> findByUserId(String receiverId) {
         return userRepository.findById(receiverId);
+    }
+
+    public List<UserDetailDTO> getAllUsers() {
+        List<User> all = userRepository.findAll();
+        List<UserDetailDTO> userDetailDTOList = new ArrayList<>();
+        all.forEach( user -> {
+            userDetailDTOList.add(new UserDetailDTO(user.getUserID(), user.getUsername(), user.getDisplayName()));
+        });
+
+        return userDetailDTOList;
     }
 }
