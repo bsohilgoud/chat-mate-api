@@ -14,12 +14,13 @@ import java.util.Enumeration;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    // comments
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors( cors -> cors.disable())
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(authorize ->
-                        authorize.requestMatchers("/auth/register", "/auth/login").permitAll()
+                        authorize.requestMatchers("/auth/register", "/auth/login", "/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .formLogin(f -> f.disable());

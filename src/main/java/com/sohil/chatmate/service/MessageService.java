@@ -6,6 +6,10 @@ import com.sohil.chatmate.enums.MessageStatus;
 import com.sohil.chatmate.repository.MessageRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class MessageService {
 
@@ -30,5 +34,22 @@ public class MessageService {
 
     public void updateMessageStatus(Long id, MessageStatus messageStatus) {
         messageRepository.updateMessageStatus(id, messageStatus);
+    }
+
+//    public void getLatestMessages() {
+//        messageRepository.getLatestMessages();
+//    }
+
+    public List<UserMessageDTO> getChatMessages(String senderId, String receiverId) {
+        List<Message> chatMessages = messageRepository.findChatMessages(senderId, receiverId);
+        return chatMessages.stream()
+                .map(message -> new UserMessageDTO(
+                        message.getSenderId(),
+                        message.getReceiverId(),
+                        message.getContent(),
+                        message.getContentType(),
+                        message.getStatus(),
+                        message.getTimestamp()))
+                .collect(Collectors.toList());
     }
 }
