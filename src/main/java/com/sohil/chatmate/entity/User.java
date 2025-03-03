@@ -1,9 +1,8 @@
 package com.sohil.chatmate.entity;
 
+import com.sohil.chatmate.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Setter
@@ -16,18 +15,22 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "user_id")
+    @Column(name = "user_id", updatable = false, unique = true, nullable = false)
     private String userID;
 
-    @Column(name = "username")
+    @Column(name = "username", nullable = false, unique = true)
     private String username;
 
     @Column(name = "password")
     private String password;
 
-    @Column(name = "last_seen")
-    private LocalDateTime lastSeen;
-
     @Column(name = "display_name")
     private String displayName;
+
+    @Column(name="auth_provider")
+    @Enumerated(EnumType.STRING)
+    private AuthProvider authProvider;
+
+    @Column(name = "google_id")
+    private String googleId;
 }
