@@ -26,10 +26,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // TIP: Don't forgot the '/'
         registry.setApplicationDestinationPrefixes("/chat-mate");
     }
-
-    // New function
-    public void newFunction(){
-        System.out.println("Deepak");
-    }
-
 }
