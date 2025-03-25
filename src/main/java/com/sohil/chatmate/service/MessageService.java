@@ -2,7 +2,10 @@ package com.sohil.chatmate.service;
 
 import com.sohil.chatmate.dto.UserMessageDTO;
 import com.sohil.chatmate.entity.Message;
+import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.enums.MessageStatus;
+import com.sohil.chatmate.exceptions.UserNotFoundException;
+import com.sohil.chatmate.helper.ChatMateHelper;
 import com.sohil.chatmate.repository.MessageRepository;
 import org.springframework.stereotype.Service;
 
@@ -40,16 +43,40 @@ public class MessageService {
 //        messageRepository.getLatestMessages();
 //    }
 
-    public List<UserMessageDTO> getChatMessages(String senderId, String receiverId) {
-        List<Message> chatMessages = messageRepository.findChatMessages(senderId, receiverId);
-        return chatMessages.stream()
-                .map(message -> new UserMessageDTO(
-                        message.getSenderId(),
-                        message.getReceiverId(),
-                        message.getContent(),
-                        message.getContentType(),
-                        message.getStatus(),
-                        message.getTimestamp()))
-                .collect(Collectors.toList());
+    public List<UserMessageDTO> getChatMessages(String receiverId) throws Exception {
+
+        User loggedInUser = ChatMateHelper.getLoggedInUser();
+        if(loggedInUser != null) {
+            List<Message> chatMessages = messageRepository.findChatMessages(loggedInUser.getUserID(), receiverId);
+            return chatMessages.stream()
+                    .map(message -> new UserMessageDTO(
+                            message.getSenderId(),
+                            message.getReceiverId(),
+                            message.getContent(),
+                            message.getContentType(),
+                            message.getStatus(),
+                            message.getTimestamp()))
+                    .collect(Collectors.toList());
+        } else{
+            throw new Exception("Invalid scenario, didn't find logged-in user");
+        }
+    }
+
+    public List<UserMessageDTO> getUnreadMessage() throws Exception {
+        User loggedInUser = ChatMateHelper.getLoggedInUser();
+        if (loggedInUser != null) {
+            List<Message> unreadMessages = messageRepository.getUnreadMessages(loggedInUser.getUserID());
+            return unreadMessages.stream()
+                    .map(message -> new UserMessageDTO(
+                            message.getSenderId(),
+                            message.getReceiverId(),
+                            message.getContent(),
+                            message.getContentType(),
+                            message.getStatus(),
+                            message.getTimestamp()))
+                    .collect(Collectors.toList());
+        } else {
+            throw new Exception("Invalid scenario, didn't find logged-in user");
+        }
     }
 }
