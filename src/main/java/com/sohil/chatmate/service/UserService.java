@@ -125,7 +125,7 @@ public class UserService {
         // Create authentication token
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user.getUsername(), null, authorities
+                user, null, authorities
         );
 
         // Set authentication in security context
