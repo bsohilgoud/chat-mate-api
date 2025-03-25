@@ -1,13 +1,13 @@
 package com.sohil.chatmate.controller;
 
 import com.sohil.chatmate.dto.UserMessageDTO;
-import com.sohil.chatmate.dto.UserShortMessages;
+import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.service.MessageService;
 import com.sohil.chatmate.service.UserService;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.Mapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -33,8 +33,34 @@ public class MessageController {
 //    }
 
 
-     List<UserMessageDTO> getChatMessages(String senderId, String receiverId){
-        return messageService.getChatMessages(senderId, receiverId);
+     /* TIP: GET /messages/{user_id}
+            {user_id} → Path variable (ID of the other user you are chatting with).
+            login_person_user_id → Sent in the request body.
+            ❌ Issues with this approach:
+                - GET requests should not have a body
+                - GET requests should not contain a request body because HTTP GET is meant for fetching data.
+             Note: Some HTTP clients (browsers, caching systems) ignore or strip bodies from GET requests.
+            ✅ The server can infer login_person_user_id from authentication extract it from the authenticated user.
+      */
+     @GetMapping("/{recipientId}")
+     public ResponseEntity<List<UserMessageDTO>> getChatMessages(@PathVariable("recipientId") String recipientId){
+         try {
+             return ResponseEntity.ok(messageService.getChatMessages(recipientId));
+         } catch (Exception e){
+             e.printStackTrace();
+             return ResponseEntity.internalServerError().build();
+         }
+     }
+
+
+     @GetMapping("/recent")
+     public ResponseEntity<List<UserMessageDTO>> getRecentMessage(){
+         try {
+             return ResponseEntity.ok(messageService.getUnreadMessage());
+         } catch (Exception e){
+             e.printStackTrace();
+             return ResponseEntity.internalServerError().build();
+         }
      }
 
 }

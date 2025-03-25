@@ -3,9 +3,7 @@ package com.sohil.chatmate.entity;
 import com.sohil.chatmate.enums.MessageStatus;
 import com.sohil.chatmate.enums.ContentType;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +11,8 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "messages")
 public class Message {
 
