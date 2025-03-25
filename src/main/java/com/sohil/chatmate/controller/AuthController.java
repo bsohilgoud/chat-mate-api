@@ -2,22 +2,18 @@ package com.sohil.chatmate.controller;
 
 import com.sohil.chatmate.dto.UserLoginDTO;
 import com.sohil.chatmate.dto.UserRegistrationDTO;
-import com.sohil.chatmate.entity.User;
+import com.sohil.chatmate.exceptions.UsernameAlreadyExistsException;
 import com.sohil.chatmate.service.UserService;
 import jakarta.servlet.http.HttpSession;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -40,75 +36,38 @@ public class AuthController {
      */
     @CrossOrigin
     @PostMapping("/register")
-    public ResponseEntity<String> register(
-        @RequestBody UserRegistrationDTO userRegistrationDTO
-    ) {
-        Optional<User> optionalUser = userService.findUserByUsername(
-            userRegistrationDTO.username()
-        );
-        if (optionalUser.isPresent()) return new ResponseEntity<>(
-            "Username already exists",
-            HttpStatusCode.valueOf(401)
-        );
-
-        userService.createUser(userRegistrationDTO);
-        return ResponseEntity.ok(
-            "Successfully Register the user: " + userRegistrationDTO.username()
-        );
+    public ResponseEntity<Object> register(@RequestBody UserRegistrationDTO userRegistrationDTO) {
+        try {
+            Map<String, Object> response = userService.registerUser(userRegistrationDTO);
+            return ResponseEntity.ok(response);
+        } catch (UsernameAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred");
+        }
     }
 
     @CrossOrigin
     @PostMapping("/login")
-    public ResponseEntity<Object> login(
-        @RequestBody UserLoginDTO userLoginDTO,
-        HttpSession session
-    ) {
-        Optional<User> optionalUser = userService.findUserByUsername(
-            userLoginDTO.username()
-        );
-        if (optionalUser.isEmpty()) return new ResponseEntity<>(
-            "No user found!!!",
-            HttpStatusCode.valueOf(401)
-        );
+    public ResponseEntity<Object> login(@RequestBody UserLoginDTO userLoginDTO, HttpSession session) {
 
-        User user = optionalUser.get();
-        boolean isValidUser = userLoginDTO
-            .password()
-            .equals(user.getPassword());
-
-        if (!isValidUser) {
-            return new ResponseEntity<>(
-                "Invalid Credentials!!!",
-                HttpStatusCode.valueOf(403)
+        try {
+            Map<String, Object> response = userService.authenticateUser(
+                    userLoginDTO.username(), userLoginDTO.password()
             );
+
+            // Store security context in session
+            session.setAttribute(
+                    HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                    SecurityContextHolder.getContext()
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }
-
-        // Create authentication token
-        List<GrantedAuthority> authorities = List.of(
-            new SimpleGrantedAuthority("ROLE_USER")
-        );
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-            user.getUsername(),
-            null, // Don't include password in token
-            authorities
-        );
-
-        // Set authentication in security context
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // Create new session and store security context
-        session.setAttribute(
-            HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
-            SecurityContextHolder.getContext()
-        );
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Successfully logged In");
-        response.put("userId", user.getUserID()); // Assuming User has a getId() method
-
-        return new ResponseEntity<>(response, HttpStatusCode.valueOf(200));
     }
-
-    @GetMapping("/hello")
-    public void greetings() {}
 }
