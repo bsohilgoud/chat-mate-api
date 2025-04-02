@@ -20,7 +20,7 @@ public class SecurityConfig {
         http.cors( cors -> cors.disable())
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(authorize ->
-                        authorize.requestMatchers("/auth/register", "/auth/login", "/**").permitAll()
+                        authorize.requestMatchers("/auth/register", "/auth/login").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .formLogin(f -> f.disable());

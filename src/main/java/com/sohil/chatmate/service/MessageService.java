@@ -44,7 +44,6 @@ public class MessageService {
 //    }
 
     public List<UserMessageDTO> getChatMessages(String receiverId) throws Exception {
-
         User loggedInUser = ChatMateHelper.getLoggedInUser();
         if(loggedInUser != null) {
             List<Message> chatMessages = messageRepository.findChatMessages(loggedInUser.getUserID(), receiverId);

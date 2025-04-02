@@ -25,7 +25,8 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     // TODO: We need sort the messages with timestamp (asc)
     @Query("SELECT m from Message m" +
             " WHERE (m.senderId = :senderId AND m.receiverId= :receiverId)" +
-            " OR (m.senderId = :receiverId AND m.receiverId= :senderId) ")
+            " OR (m.senderId = :receiverId AND m.receiverId= :senderId) " +
+            " ORDER BY timestamp ASC")
     List<Message> findChatMessages(@Param("senderId") String senderId, @Param("receiverId") String receiverId);
 
     @Query("SELECT m from Message m WHERE m.receiverId = :receiverId AND m.status = 'DELIVERED'")
