@@ -131,6 +131,10 @@ public class UserService {
         // Set authentication in security context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        System.out.println("===============================");
+        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
+        System.out.println("===============================");
+
         updateOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
 
         // Prepare response

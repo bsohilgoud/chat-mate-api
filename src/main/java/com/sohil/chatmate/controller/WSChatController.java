@@ -35,29 +35,29 @@ public class WSChatController {
 //        return userMessageDTO;
 //    }
 
-    // TIP: We don't need to specific the application prefix again here (/chat-mate/queue/)
-    @MessageMapping("/queue/private")
-    public void sendPrivateMessage(@Payload UserMessageDTO userMessage) {
-        System.out.println("Inside the sendPrivateMessage");
-        String receiverId = userMessage.receiverId();
-
-        System.out.println("receiverId = " + receiverId);
-        System.out.println("userMessage = " + userMessage);
-
-        Optional<User> optionalReceiverUser = userService.findByUserId(receiverId);
-
-        if (optionalReceiverUser.isEmpty())
-            ResponseEntity.badRequest();
-
-        Message savedMessage = messageService.saveMessage(userMessage);
-
-        String destination = "/queue/private/" + receiverId;
-        System.out.println("Sending message to destination: " + destination);
-
-        // TIP: Since we are not using the sendToUser the subscription and destination should not include /user
-        simpMessagingTemplate.convertAndSend(destination, userMessage);
-
-        System.out.println("updating status of message with id: = " + savedMessage.getId());
-        messageService.updateMessageStatus(savedMessage.getId(), MessageStatus.DELIVERED);
-    }
+//    // TIP: We don't need to specific the application prefix again here (/chat-mate/queue/)
+//    @MessageMapping("/queue/private")
+//    public void sendPrivateMessage(@Payload UserMessageDTO userMessage) {
+//        System.out.println("Inside the sendPrivateMessage");
+//        String receiverId = userMessage.receiverId();
+//
+//        System.out.println("receiverId = " + receiverId);
+//        System.out.println("userMessage = " + userMessage);
+//
+//        Optional<User> optionalReceiverUser = userService.findByUserId(receiverId);
+//
+//        if (optionalReceiverUser.isEmpty())
+//            ResponseEntity.badRequest();
+//
+//        Message savedMessage = messageService.saveMessage(userMessage);
+//
+//        String destination = "/queue/private/" + receiverId;
+//        System.out.println("Sending message to destination: " + destination);
+//
+//        // TIP: Since we are not using the sendToUser the subscription and destination should not include /user
+//        simpMessagingTemplate.convertAndSend(destination, userMessage);
+//
+////        System.out.println("updating status of message with id: = " + savedMessage.getId());
+////        messageService.updateMessageStatus(savedMessage.getId(), MessageStatus.DELIVERED);
+//    }
 }
