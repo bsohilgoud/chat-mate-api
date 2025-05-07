@@ -8,6 +8,7 @@ public interface LastConversation {
     String getReceiverId();
     LocalDateTime getTimestamp();
     String getContent();
+    String getContentType();
     Integer getNewMessagesCount();
     String getPartnerDisplayName();
     String getPartnerId();

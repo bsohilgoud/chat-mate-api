@@ -1,6 +1,7 @@
 package com.sohil.chatmate.controller;
 
 import com.sohil.chatmate.dto.BulkStatusUpdateRequestDTO;
+import com.sohil.chatmate.dto.MessageWithMediaFileDTO;
 import com.sohil.chatmate.dto.StatusUpdateRequestDTO;
 import com.sohil.chatmate.dto.UserMessageDTO;
 import com.sohil.chatmate.entity.Message;
@@ -9,11 +10,17 @@ import com.sohil.chatmate.helper.WSMessagesHelper;
 import com.sohil.chatmate.projection.LastConversation;
 import com.sohil.chatmate.service.MessageService;
 import com.sohil.chatmate.service.UserService;
+import jakarta.websocket.server.PathParam;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 @RestController
@@ -69,6 +76,42 @@ public class MessageController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/media/{fileName}")
+    public ResponseEntity<byte[]> getMediaFile(@PathVariable("fileName") String fileName){
+        try {
+            System.out.println("fileName = " + fileName);
+            byte[] mediaFile = messageService.getMediaFile(fileName);
+            System.out.println("mediaFile.length = " + mediaFile.length);
+
+            String contentType = Files.probeContentType(Path.of(fileName));
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                    .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
+                    .body(mediaFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        } catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<?> uploadMediaFile(@ModelAttribute MessageWithMediaFileDTO messageWithMediaFileDTO) throws IOException {
+        try {
+            UserMessageDTO userMessageDTO = messageService.newMessageWithMediaFile(messageWithMediaFileDTO);
+            return ResponseEntity.ok(userMessageDTO);
+        } catch (IOException ioException){
+            ioException.printStackTrace();
+            return ResponseEntity.internalServerError().body("Failed to save the media file");
+        } catch (Exception exception){
+            return ResponseEntity.internalServerError().build();
+        }
+
     }
 
     @PostMapping("/new")

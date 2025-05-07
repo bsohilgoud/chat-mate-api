@@ -33,9 +33,9 @@ public class Message {
     @Column(name = "timestamp")
     LocalDateTime timestamp;
 
-    //TODO: WE need to support this in future
-//    @Column(name = "media")
-//    MultipartFile media;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "media_id")
+    Media media;
 
     @Column(name = "content_type")
     @Enumerated(EnumType.STRING)
