@@ -1,20 +1,18 @@
 package com.sohil.chatmate.service;
 
-import com.sohil.chatmate.dto.BulkStatusUpdateRequestDTO;
-import com.sohil.chatmate.dto.MediaFileDTO;
-import com.sohil.chatmate.dto.MessageWithMediaFileDTO;
-import com.sohil.chatmate.dto.UserMessageDTO;
+import com.sohil.chatmate.dto.*;
 import com.sohil.chatmate.entity.Media;
 import com.sohil.chatmate.entity.Message;
 import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.enums.ContentType;
 import com.sohil.chatmate.enums.MessageStatus;
-import com.sohil.chatmate.exceptions.UserNotFoundException;
+import com.sohil.chatmate.enums.NotificationType;
 import com.sohil.chatmate.helper.ChatMateHelper;
-import com.sohil.chatmate.helper.WSMessagesHelper;
+import com.sohil.chatmate.helper.NotificationService;
 import com.sohil.chatmate.projection.LastConversation;
 import com.sohil.chatmate.repository.MediaRepository;
 import com.sohil.chatmate.repository.MessageRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -23,25 +21,23 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
 
     MessageRepository messageRepository;
-    WSMessagesHelper wsMessagesHelper;
+    NotificationService notificationService;
     private static final String MEDIA_FILE_UPLOAD_DIR = "uploads/";
 
     @Autowired
     MediaRepository mediaRepository;
 
 
-    public MessageService(MessageRepository messageRepository, WSMessagesHelper wsMessagesHelper) {
+    public MessageService(MessageRepository messageRepository, NotificationService notificationService) {
         this.messageRepository = messageRepository;
-        this.wsMessagesHelper = wsMessagesHelper;
+        this.notificationService = notificationService;
     }
 
     private Message saveMessage(UserMessageDTO userMessageDTO) {
@@ -76,6 +72,13 @@ public class MessageService {
 
     public void updateMessageStatus(Long id, MessageStatus messageStatus) {
         messageRepository.updateMessageStatus(id, messageStatus);
+
+        Message message = messageRepository.findById(id).orElseThrow();
+        notificationService.notification(NotificationType.MESSAGE_STATUS_UPDATED)
+                .toUser(message.getReceiverId())
+                .withBody(Map.of("messageId", id, "status", messageStatus))
+                .send();
+
     }
 
     public void bulkMessageStatusUpdate(BulkStatusUpdateRequestDTO bulkStatusUpdateRequestDTO) throws Exception {
@@ -88,6 +91,11 @@ public class MessageService {
         } else {
             throw new Exception("Invalid scenario, didn't find logged-in user");
         }
+
+        notificationService.notification(NotificationType.BULK_MESSAGE_STATUS_UPDATED)
+                .toUser(partnerId)
+                .withBody(Map.of("status", toStatus))
+                .send();
     }
 
     public List<UserMessageDTO> getChatMessages(String receiverId) throws Exception {
@@ -140,9 +148,11 @@ public class MessageService {
         }
     }
 
+    @Transactional
     public UserMessageDTO newMessage(UserMessageDTO newMessage) {
         // Adding new message to DB
         Message message = saveMessage(newMessage);
+        message.setStatus(MessageStatus.DELIVERED);
         UserMessageDTO savedMessageDTO = new UserMessageDTO(
                 message.getId(),
                 message.getSenderId(),
@@ -153,7 +163,13 @@ public class MessageService {
                 message.getStatus(),
                 message.getTimestamp());
 
-        wsMessagesHelper.sendNewPrivateMessage(savedMessageDTO);
+        notificationService.notification(NotificationType.NEW_MESSAGE)
+                .fromUser(savedMessageDTO.senderId())
+                .toUser(savedMessageDTO.receiverId())
+                .withBody(savedMessageDTO)
+                .send();
+
+        messageRepository.save(message);
 
         return savedMessageDTO;
     }
@@ -204,7 +220,11 @@ public class MessageService {
                 message.getStatus(),
                 message.getTimestamp());
 
-        wsMessagesHelper.sendNewPrivateMessage(savedMessageDTO);
+        notificationService.notification(NotificationType.NEW_MESSAGE)
+                .fromUser(savedMessageDTO.senderId())
+                .toUser(savedMessageDTO.receiverId())
+                .withBody(savedMessageDTO)
+                .send();
 
         return savedMessageDTO;
 
@@ -217,5 +237,13 @@ public class MessageService {
         }
 
         return Files.readAllBytes(file.toPath());
+    }
+
+    public void sendUserTypingNotification(String receiverId) {
+        User loggedInUser = ChatMateHelper.getLoggedInUser();
+        notificationService.notification(NotificationType.USER_TYPING)
+                .toUser(receiverId)
+                .fromUser(loggedInUser.getUserID())
+                .send();
     }
 }

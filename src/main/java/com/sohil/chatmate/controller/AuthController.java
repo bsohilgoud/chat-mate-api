@@ -34,7 +34,6 @@ public class AuthController {
             "displayName" : "Sai"
         }
      */
-    @CrossOrigin
     @PostMapping("/register")
     public ResponseEntity<Object> register(@RequestBody UserRegistrationDTO userRegistrationDTO) {
         try {
@@ -48,7 +47,6 @@ public class AuthController {
         }
     }
 
-    @CrossOrigin
     @PostMapping("/login")
     public ResponseEntity<Object> login(@RequestBody UserLoginDTO userLoginDTO, HttpSession session) {
 
@@ -66,6 +64,16 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (BadCredentialsException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Object> logout(HttpSession session) {
+        try {
+            Map<String, Object> response = userService.logoutUser(session);
+            return ResponseEntity.ok(response);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         }

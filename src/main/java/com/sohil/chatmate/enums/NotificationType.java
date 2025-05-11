@@ -1,0 +1,17 @@
+package com.sohil.chatmate.enums;
+
+public enum NotificationType{
+    ONLINE_STATUS,
+    MESSAGE_STATUS_UPDATED,
+    BULK_MESSAGE_STATUS_UPDATED,
+    NEW_MESSAGE,
+    USER_TYPING,
+    MESSAGE_DELETED,
+    MESSAGE_EDITED,
+    USER_OFFLINE,
+    USER_ONLINE,
+    USER_JOINED,
+    USER_LEFT,
+    READ_RECEIPT,
+    MESSAGE_REACTION,
+}

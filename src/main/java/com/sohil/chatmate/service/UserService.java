@@ -1,17 +1,19 @@
 package com.sohil.chatmate.service;
 
-import com.sohil.chatmate.dto.OnlineStatusDTO;
-import com.sohil.chatmate.dto.UpdateOnlineStatusRequestDTO;
-import com.sohil.chatmate.dto.UserDetailDTO;
-import com.sohil.chatmate.dto.UserRegistrationDTO;
+import com.sohil.chatmate.dto.*;
 import com.sohil.chatmate.entity.OnlineStatus;
 import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.enums.AuthProvider;
+import com.sohil.chatmate.enums.NotificationType;
 import com.sohil.chatmate.exceptions.UserNotFoundException;
 import com.sohil.chatmate.exceptions.UsernameAlreadyExistsException;
+import com.sohil.chatmate.helper.ChatMateHelper;
+import com.sohil.chatmate.helper.NotificationService;
 import com.sohil.chatmate.repository.OnlineStatusRepository;
 import com.sohil.chatmate.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -19,6 +21,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,6 +32,9 @@ public class UserService {
 
     UserRepository userRepository;
     OnlineStatusRepository onlineStatusRepository;
+
+    @Autowired
+    NotificationService notificationService;
 
     public UserService(UserRepository userRepository, OnlineStatusRepository onlineStatusRepository) {
         this.userRepository = userRepository;
@@ -135,12 +141,17 @@ public class UserService {
         System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
         System.out.println("===============================");
 
-        updateOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
+        String userID = user.getUserID();
+        updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
+
+        notificationService.notification(NotificationType.USER_ONLINE)
+                .fromUser(userID)
+                .send();
 
         // Prepare response
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Successfully logged in");
-        response.put("userId", user.getUserID()); // Assuming User has a getUserID() method
+        response.put("userId", userID); // Assuming User has a getUserID() method
         return response;
     }
 
@@ -172,5 +183,28 @@ public class UserService {
         }
 
         onlineStatusRepository.updateStatus(userId, status);
+    }
+
+    public Map<String, Object> logoutUser(HttpSession httpSession) {
+        User loggedInUser = ChatMateHelper.getLoggedInUser();
+        Map<String, Object> response = new HashMap<>();
+
+        if(loggedInUser != null){
+            String userID = loggedInUser.getUserID();
+            SecurityContextHolder.clearContext();
+            httpSession.removeAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+            updateOnlineStatus(userID, OnlineStatus.StatusType.OFFLINE);
+
+            notificationService.notification(NotificationType.USER_OFFLINE)
+                    .fromUser(userID)
+                    .send();
+
+            response.put("message", "Successfully logged out");
+            response.put("userId", userID);
+            response.put("userName", loggedInUser.getUsername());
+        }
+
+
+        return response;
     }
 }

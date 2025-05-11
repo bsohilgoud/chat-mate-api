@@ -4,18 +4,16 @@ import com.sohil.chatmate.dto.BulkStatusUpdateRequestDTO;
 import com.sohil.chatmate.dto.MessageWithMediaFileDTO;
 import com.sohil.chatmate.dto.StatusUpdateRequestDTO;
 import com.sohil.chatmate.dto.UserMessageDTO;
-import com.sohil.chatmate.entity.Message;
 import com.sohil.chatmate.entity.User;
-import com.sohil.chatmate.helper.WSMessagesHelper;
+import com.sohil.chatmate.enums.NotificationType;
+import com.sohil.chatmate.helper.ChatMateHelper;
+import com.sohil.chatmate.helper.NotificationService;
 import com.sohil.chatmate.projection.LastConversation;
 import com.sohil.chatmate.service.MessageService;
 import com.sohil.chatmate.service.UserService;
-import jakarta.websocket.server.PathParam;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -120,8 +118,9 @@ public class MessageController {
         return ResponseEntity.ok(userMessageDTO);
     }
 
-    @PatchMapping("/status/{messageId}")
-    public ResponseEntity<?> updateMessageStatus(@PathVariable Long messageId, @RequestBody StatusUpdateRequestDTO statusUpdateRequestDTO) {
+    @PostMapping("/status/{messageId}")
+    public ResponseEntity<?> updateMessageStatus(@PathVariable("messageId") Long messageId, @RequestBody StatusUpdateRequestDTO statusUpdateRequestDTO) {
+        System.out.println("Received message status update for messageId = " + messageId);
         try {
             messageService.updateMessageStatus(messageId, statusUpdateRequestDTO.status());
             return ResponseEntity.ok().build();
@@ -140,5 +139,10 @@ public class MessageController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @PostMapping("/typing")
+    public void userTyping(@RequestBody String receiverId){
+        messageService.sendUserTypingNotification(receiverId);
     }
 }
