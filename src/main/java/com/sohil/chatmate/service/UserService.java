@@ -207,4 +207,51 @@ public class UserService {
 
         return response;
     }
+
+    public Map<String, Object> oauthSignIn(String email, String name, String userGoogleId, AuthProvider authProvider) {
+        User user;
+        if(!checkIFUserExists(email)){
+            User newUser = User.builder()
+                    .username(email)
+                    .displayName(name)
+                    .googleId(userGoogleId)
+                    .authProvider(authProvider)
+                    .build();
+
+            user = userRepository.save(newUser);
+            OnlineStatus userOnlineStatus = new OnlineStatus(newUser.getUserID(), OnlineStatus.StatusType.ONLINE, LocalDateTime.now());
+            onlineStatusRepository.save(userOnlineStatus);
+        } else {
+            user = userRepository.findUserByUsername(email).get();
+        }
+
+        // Create authentication token
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        System.out.println("user = " + user);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user, null, authorities
+        );
+
+        // Set authentication in security context
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        Object principal = authentication.getPrincipal();
+        System.out.println("principal = " + principal);
+
+        System.out.println("===============================");
+        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
+        System.out.println("===============================");
+
+        String userID = user.getUserID();
+        updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
+
+        notificationService.notification(NotificationType.USER_ONLINE)
+                .fromUser(userID)
+                .send();
+
+        // Prepare response
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Successfully logged in");
+        response.put("userId", userID);
+        return response;
+    }
 }
