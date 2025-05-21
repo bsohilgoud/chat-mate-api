@@ -3,6 +3,10 @@ package com.sohil.chatmate.entity;
 import com.sohil.chatmate.enums.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Setter
@@ -18,19 +22,48 @@ public class User {
     @Column(name = "user_id", updatable = false, unique = true, nullable = false)
     private String userID;
 
-    @Column(name = "username", nullable = false, unique = true)
+    @Column(name = "email", unique = true)
+    private String email;
+
+    @Column(name = "username", unique = true)
     private String username;
+
+    @Column(name = "phone_number", unique = true)
+    private String phoneNumber;
+
+    @Column(name = "full_name")
+    private String fullName;
 
     @Column(name = "password")
     private String password;
 
-    @Column(name = "display_name")
-    private String displayName;
+    @Column(name = "profile_url")
+    private String profileUrl;
 
-    @Column(name="auth_provider")
+    @Column(name = "auth_provider")
     @Enumerated(EnumType.STRING)
     private AuthProvider authProvider;
 
-    @Column(name = "google_id")
-    private String googleId;
+    @Column(name = "provider_id")
+    private String providerId;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    @Column(name = "primary_login_method")
+    @Enumerated(EnumType.STRING)
+    private LoginMethod primaryLoginMethod;
+
+
+    public enum LoginMethod {
+        EMAIL,
+        PHONE,
+        USERNAME,
+        OAUTH
+    }
 }
