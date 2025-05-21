@@ -21,13 +21,21 @@ public class SecurityConfig {
     // comments
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.cors( cors -> cors.configurationSource(corsConfigurationSource()))
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(authorize ->
-                        authorize.requestMatchers("/auth/register", "/auth/login", "/auth/google").permitAll()
-                                .anyRequest().authenticated()
+                        authorize.requestMatchers(
+                                        "/auth/register",
+                                        "/auth/login",
+                                        "/auth/google",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**",
+                                        "/swagger-ui.html")
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated()
                 )
-                .formLogin(f -> f.disable());
+                .formLogin(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
