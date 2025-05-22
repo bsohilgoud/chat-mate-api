@@ -1,257 +1,29 @@
 package com.sohil.chatmate.service;
 
-import com.sohil.chatmate.dto.*;
-import com.sohil.chatmate.entity.OnlineStatus;
+
+import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.entity.User;
-import com.sohil.chatmate.enums.AuthProvider;
-import com.sohil.chatmate.enums.NotificationType;
-import com.sohil.chatmate.exceptions.UserNotFoundException;
-import com.sohil.chatmate.exceptions.UsernameAlreadyExistsException;
-import com.sohil.chatmate.helper.ChatMateHelper;
-import com.sohil.chatmate.helper.NotificationService;
-import com.sohil.chatmate.repository.OnlineStatusRepository;
-import com.sohil.chatmate.repository.UserRepository;
-import jakarta.servlet.http.HttpSession;
-import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
-@Service
-public class UserService {
+public interface UserService {
 
-    UserRepository userRepository;
-    OnlineStatusRepository onlineStatusRepository;
+    User findUserByEmail(String email);
 
-    @Autowired
-    NotificationService notificationService;
+    User findUserByUsername(String username);
 
-    public UserService(UserRepository userRepository, OnlineStatusRepository onlineStatusRepository) {
-        this.userRepository = userRepository;
-        this.onlineStatusRepository = onlineStatusRepository;
-    }
+    List<UserDTO> findAllUsers();
 
-    //    @Transactional
-    public void createUser(UserRegistrationDTO userRegistrationDTO) {
-        User user = User.builder()
-                .username(userRegistrationDTO.username())
-                .password(userRegistrationDTO.password())
-                .displayName(userRegistrationDTO.displayName())
-                .build();
+    User getUser(String id);
 
-        userRepository.save(user);
+    User createUser(User user);
 
-    }
+    User updateUser(User user);
 
-    private boolean isValidUser(User user, String password) {
-        return user != null && password.equals(user.getPassword());
-    }
+    void deleteUser(String id);
 
-    private Optional<User> findUserByUsername(String username) {
-        return userRepository.findUserByUsername(username);
-    }
+    boolean existsByUsername(String username);
 
-    public Optional<User> findByUserId(String receiverId) {
-        return userRepository.findById(receiverId);
-    }
-
-    public List<UserDetailDTO> getAllUsers() {
-        List<User> all = userRepository.findAll();
-        List<UserDetailDTO> userDetailDTOList = new ArrayList<>();
-        all.forEach( user -> {
-            userDetailDTOList.add(new UserDetailDTO(user.getUserID(), user.getUsername(), user.getDisplayName()));
-        });
-
-        return userDetailDTOList;
-    }
-
-    private boolean checkIFUserExists(String username){
-        Optional<User> userByUsername = findUserByUsername(username);
-        return userByUsername.isPresent();
-    }
-
-    /**
-     * Creates new user if not exists
-     * @param userRegistrationDTO
-     * @return
-     */
-    public Map<String, Object> registerUser(UserRegistrationDTO userRegistrationDTO) {
-        String username = userRegistrationDTO.username();
-        if(checkIFUserExists(username)){
-            throw new UsernameAlreadyExistsException(username + ": username already exists !!");
-        }
-
-        User user = User.builder()
-                .username(userRegistrationDTO.username())
-                .password(userRegistrationDTO.password())
-                .displayName(userRegistrationDTO.displayName())
-                .authProvider(AuthProvider.LOCAL)
-                .build();
-
-        User newUser = userRepository.save(user);
-
-        // Adding online_status entry for the given user
-        OnlineStatus userOnlineStatus = new OnlineStatus(newUser.getUserID(), OnlineStatus.StatusType.ONLINE, LocalDateTime.now());
-        onlineStatusRepository.save(userOnlineStatus);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Successfully registered the user: " + username);
-        response.put("userId", newUser.getUserID()); // Assuming User has a getUserID() method
-        return response;
-    }
-
-    /**
-     * Authenticates the users by comparing the password
-     * @param username
-     * @param password
-     * @return
-     */
-    public Map<String, Object> authenticateUser(String username, String password) {
-
-        Optional<User> optionalUser = findUserByUsername(username);
-        if (optionalUser.isEmpty()) {
-            throw new UsernameNotFoundException("No user found!!!");
-        }
-
-        User user = optionalUser.get();
-        if (!isValidUser(user, password)) {
-            throw new BadCredentialsException("Invalid Credentials!!!");
-        }
-
-        // Create authentication token
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user, null, authorities
-        );
-
-        // Set authentication in security context
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        System.out.println("===============================");
-        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
-        System.out.println("===============================");
-
-        String userID = user.getUserID();
-        updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
-
-        notificationService.notification(NotificationType.USER_ONLINE)
-                .fromUser(userID)
-                .send();
-
-        // Prepare response
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Successfully logged in");
-        response.put("userId", userID); // Assuming User has a getUserID() method
-        return response;
-    }
-
-    @Transactional
-    private void updateOnlineStatus(String userId, OnlineStatus.StatusType statusType) {
-        OnlineStatus onlineStatus = onlineStatusRepository.getReferenceById(userId);
-        onlineStatus.setStatus(statusType);
-        onlineStatus.setLastSeen(LocalDateTime.now());
-        onlineStatusRepository.save(onlineStatus);
-    }
-
-    // TIP: Use DTO's else we are getting Serialization exception
-    // ERROR : The error you're encountering, InvalidDefinitionException: No serializer found for class org.hibernate.proxy.pojo.bytebuddy.ByteBuddyInterceptor, typically arises when attempting to serialize a Hibernate proxy object that is in a lazy-loaded state. This situation often occurs in Spring applications using JPA with Hibernate when the entity relationships are set to FetchType.LAZY, leading to proxy objects that Jackson cannot serialize directly.
-    public OnlineStatusDTO getOnlineStatus(String userId) {
-        // TIP: When using getReferenceById in JPA, it’s important to understand its behavior. This method returns a reference to the entity with the given identifier, but it does not immediately hit the database to check if the entity exists. Instead, it creates a proxy object that will be initialized when you access any of its properties.
-        if(!onlineStatusRepository.existsById(userId)){
-            throw new UserNotFoundException("Unable to find user with id: " + userId);
-        }
-
-        OnlineStatus onlineStatus = onlineStatusRepository.getReferenceById(userId);
-        return new OnlineStatusDTO(onlineStatus.getUserId(), onlineStatus.getLastSeen(), onlineStatus.getStatus().toString());
-    }
-
-    public void updateOnlineStatus(UpdateOnlineStatusRequestDTO updateOnlineStatusRequestDTO) {
-        String userId = updateOnlineStatusRequestDTO.userId();
-        OnlineStatus.StatusType status = updateOnlineStatusRequestDTO.status();
-        if(!onlineStatusRepository.existsById(userId)){
-            throw new UserNotFoundException("Unable to find user with id: " + userId);
-        }
-
-        onlineStatusRepository.updateStatus(userId, status);
-    }
-
-    public Map<String, Object> logoutUser(HttpSession httpSession) {
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
-        Map<String, Object> response = new HashMap<>();
-
-        if(loggedInUser != null){
-            String userID = loggedInUser.getUserID();
-            SecurityContextHolder.clearContext();
-            httpSession.removeAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
-            updateOnlineStatus(userID, OnlineStatus.StatusType.OFFLINE);
-
-            notificationService.notification(NotificationType.USER_OFFLINE)
-                    .fromUser(userID)
-                    .send();
-
-            response.put("message", "Successfully logged out");
-            response.put("userId", userID);
-            response.put("userName", loggedInUser.getUsername());
-        }
-
-
-        return response;
-    }
-
-    public Map<String, Object> oauthSignIn(String email, String name, String userGoogleId, AuthProvider authProvider) {
-        User user;
-        if(!checkIFUserExists(email)){
-            User newUser = User.builder()
-                    .username(email)
-                    .displayName(name)
-                    .googleId(userGoogleId)
-                    .authProvider(authProvider)
-                    .build();
-
-            user = userRepository.save(newUser);
-            OnlineStatus userOnlineStatus = new OnlineStatus(newUser.getUserID(), OnlineStatus.StatusType.ONLINE, LocalDateTime.now());
-            onlineStatusRepository.save(userOnlineStatus);
-        } else {
-            user = userRepository.findUserByUsername(email).get();
-        }
-
-        // Create authentication token
-        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        System.out.println("user = " + user);
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user, null, authorities
-        );
-
-        // Set authentication in security context
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        Object principal = authentication.getPrincipal();
-        System.out.println("principal = " + principal);
-
-        System.out.println("===============================");
-        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
-        System.out.println("===============================");
-
-        String userID = user.getUserID();
-        updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
-
-        notificationService.notification(NotificationType.USER_ONLINE)
-                .fromUser(userID)
-                .send();
-
-        // Prepare response
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Successfully logged in");
-        response.put("userId", userID);
-        return response;
-    }
+    void changePassword(String userId, String newPassword);
 }
