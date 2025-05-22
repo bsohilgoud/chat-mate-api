@@ -1,17 +1,13 @@
 package com.sohil.chatmate.controller;
 
-import com.sohil.chatmate.dto.BulkStatusUpdateRequestDTO;
-import com.sohil.chatmate.dto.MessageWithMediaFileDTO;
-import com.sohil.chatmate.dto.StatusUpdateRequestDTO;
-import com.sohil.chatmate.dto.UserMessageDTO;
-import com.sohil.chatmate.entity.User;
-import com.sohil.chatmate.enums.NotificationType;
-import com.sohil.chatmate.helper.ChatMateHelper;
-import com.sohil.chatmate.helper.NotificationService;
-import com.sohil.chatmate.projection.LastConversation;
+import com.sohil.chatmate.dto.*;
+import com.sohil.chatmate.projection.ConversationSummary;
 import com.sohil.chatmate.service.MessageService;
 import com.sohil.chatmate.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,11 +26,19 @@ public class MessageController {
     UserService userService;
     MessageService messageService;
 
+    @Autowired
+    HttpServletRequest httpServletRequest;
+
     public MessageController(UserService userService, MessageService messageService) {
         this.userService = userService;
         this.messageService = messageService;
     }
 
+    @PostMapping
+    public ResponseEntity<ApiResponse<UserMessageDTO>> addNewMessage(@RequestBody UserMessageDTO newMessage) {
+        UserMessageDTO userMessageDTO = messageService.newMessage(newMessage);
+        return ApiResponse.success(HttpStatus.OK.value(), userMessageDTO, httpServletRequest.getRequestURI());
+    }
 
     /* TIP: GET /messages/{user_id}
            {user_id} → Path variable (ID of the other user you are chatting with).
@@ -45,100 +49,48 @@ public class MessageController {
             Note: Some HTTP clients (browsers, caching systems) ignore or strip bodies from GET requests.
            ✅ The server can infer login_person_user_id from authentication extract it from the authenticated user.
      */
-    @GetMapping("/{recipientId}")
-    public ResponseEntity<List<UserMessageDTO>> getChatMessages(@PathVariable("recipientId") String recipientId) {
-        try {
-            return ResponseEntity.ok(messageService.getChatMessages(recipientId));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
+    @GetMapping("/conversations/{recipientId}")
+    public ResponseEntity<ApiResponse<List<UserMessageDTO>>> getConversationForUser(@PathVariable("recipientId") String recipientId) throws Exception {
+        List<UserMessageDTO> chatMessages = messageService.getChatMessages(recipientId);
+
+        return ApiResponse.success(HttpStatus.OK.value(), chatMessages, httpServletRequest.getRequestURI());
     }
 
+    @GetMapping("/conversations/summary")
+    public ResponseEntity<ApiResponse<List<ConversationSummary>>> get() throws Exception {
+        List<ConversationSummary> conversationSummaries = messageService.getConversationSummary();
 
-    @GetMapping("/recent")
-    public ResponseEntity<List<UserMessageDTO>> getRecentMessage() {
-        try {
-            return ResponseEntity.ok(messageService.getUnreadMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
+        return ApiResponse.success(HttpStatus.OK.value(), conversationSummaries, httpServletRequest.getRequestURI());
+
     }
 
-    @GetMapping("/latest")
-    public ResponseEntity<List<LastConversation>> getLatestMessages() {
-        try {
-            return ResponseEntity.ok(messageService.getLastMessages());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
+    @PatchMapping("/status/{messageId}")
+    public ResponseEntity<?> updateMessageStatus(@PathVariable("messageId") Long messageId, @RequestBody StatusUpdateRequestDTO statusUpdateRequestDTO) {
+        messageService.updateMessageStatus(messageId, statusUpdateRequestDTO.status());
+        return ApiResponse.success(HttpStatus.OK.value(), null, "Updated the status of the message with id: " + messageId, httpServletRequest.getRequestURI());
+    }
+
+    @PostMapping("/status/batch")
+    public ResponseEntity<?> batchMessageStatusUpdate(@RequestBody BatchStatusUpdateRequestDTO batchStatusUpdateRequestDTO) throws Exception {
+        messageService.batchMessageStatusUpdate(batchStatusUpdateRequestDTO);
+        return ApiResponse.success(HttpStatus.OK.value(), null, httpServletRequest.getRequestURI());
+    }
+
+    @PostMapping("/media")
+    public ResponseEntity<ApiResponse<UserMessageDTO>> uploadMediaFile(@ModelAttribute MessageWithMediaFileDTO messageWithMediaFileDTO) throws IOException {
+        UserMessageDTO userMessageDTO = messageService.newMessageWithMediaFile(messageWithMediaFileDTO);
+        return ApiResponse.success(HttpStatus.OK.value(), userMessageDTO, httpServletRequest.getRequestURI());
     }
 
     @GetMapping("/media/{fileName}")
-    public ResponseEntity<byte[]> getMediaFile(@PathVariable("fileName") String fileName){
-        try {
-            System.out.println("fileName = " + fileName);
-            byte[] mediaFile = messageService.getMediaFile(fileName);
-            System.out.println("mediaFile.length = " + mediaFile.length);
+    public ResponseEntity<byte[]> getMediaFile(@PathVariable("fileName") String fileName) throws IOException {
+        byte[] mediaFile = messageService.getMediaFile(fileName);
+        String contentType = Files.probeContentType(Path.of(fileName));
 
-            String contentType = Files.probeContentType(Path.of(fileName));
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
-                    .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
-                    .body(mediaFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.notFound().build();
-        } catch (Exception e){
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping("/upload")
-    public ResponseEntity<?> uploadMediaFile(@ModelAttribute MessageWithMediaFileDTO messageWithMediaFileDTO) throws IOException {
-        try {
-            UserMessageDTO userMessageDTO = messageService.newMessageWithMediaFile(messageWithMediaFileDTO);
-            return ResponseEntity.ok(userMessageDTO);
-        } catch (IOException ioException){
-            ioException.printStackTrace();
-            return ResponseEntity.internalServerError().body("Failed to save the media file");
-        } catch (Exception exception){
-            return ResponseEntity.internalServerError().build();
-        }
-
-    }
-
-    @PostMapping("/new")
-    public ResponseEntity<UserMessageDTO> receivedNewMessage(@RequestBody UserMessageDTO newMessage) {
-        UserMessageDTO userMessageDTO = messageService.newMessage(newMessage);
-        return ResponseEntity.ok(userMessageDTO);
-    }
-
-    @PostMapping("/status/{messageId}")
-    public ResponseEntity<?> updateMessageStatus(@PathVariable("messageId") Long messageId, @RequestBody StatusUpdateRequestDTO statusUpdateRequestDTO) {
-        System.out.println("Received message status update for messageId = " + messageId);
-        try {
-            messageService.updateMessageStatus(messageId, statusUpdateRequestDTO.status());
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
-    @PostMapping("/status/bulk")
-    public ResponseEntity<?> bulkMessageStatusUpdate(@RequestBody BulkStatusUpdateRequestDTO bulkStatusUpdateRequestDTO) {
-        try {
-            messageService.bulkMessageStatusUpdate(bulkStatusUpdateRequestDTO);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
-        }
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
+                .body(mediaFile);
     }
 
     @PostMapping("/typing")

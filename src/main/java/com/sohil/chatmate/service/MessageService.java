@@ -9,7 +9,8 @@ import com.sohil.chatmate.enums.MessageStatus;
 import com.sohil.chatmate.enums.NotificationType;
 import com.sohil.chatmate.helper.ChatMateHelper;
 import com.sohil.chatmate.helper.NotificationService;
-import com.sohil.chatmate.projection.LastConversation;
+import com.sohil.chatmate.mapper.MessageMapper;
+import com.sohil.chatmate.projection.ConversationSummary;
 import com.sohil.chatmate.repository.MediaRepository;
 import com.sohil.chatmate.repository.MessageRepository;
 import jakarta.transaction.Transactional;
@@ -51,7 +52,6 @@ public class MessageService {
                 .media(null)
                 .build();
 
-        System.out.println("message = " + message);
         return messageRepository.save(message);
     }
 
@@ -66,7 +66,6 @@ public class MessageService {
                 .media(media)
                 .build();
 
-        System.out.println("message = " + message);
         return messageRepository.save(message);
     }
 
@@ -81,7 +80,7 @@ public class MessageService {
 
     }
 
-    public void bulkMessageStatusUpdate(BulkStatusUpdateRequestDTO bulkStatusUpdateRequestDTO) throws Exception {
+    public void batchMessageStatusUpdate(BatchStatusUpdateRequestDTO bulkStatusUpdateRequestDTO) throws Exception {
         MessageStatus fromStatus = bulkStatusUpdateRequestDTO.fromStatus();
         MessageStatus toStatus = bulkStatusUpdateRequestDTO.toStatus();
         String partnerId = bulkStatusUpdateRequestDTO.partnerId();
@@ -104,15 +103,7 @@ public class MessageService {
             List<Message> chatMessages = messageRepository.findChatMessages(loggedInUser.getUserID(), receiverId);
 
             return chatMessages.stream()
-                    .map(message -> new UserMessageDTO(
-                            message.getId(),
-                            message.getSenderId(),
-                            message.getReceiverId(),
-                            message.getContent(),
-                            message.getContentType(),
-                            message.getMedia() != null ? new MediaFileDTO(message.getMedia()): null,
-                            message.getStatus(),
-                            message.getTimestamp()))
+                    .map(MessageMapper::toDto)
                     .collect(Collectors.toList());
         } else {
             throw new Exception("Invalid scenario, didn't find logged-in user");
@@ -124,22 +115,14 @@ public class MessageService {
         if (loggedInUser != null) {
             List<Message> unreadMessages = messageRepository.getUnreadMessages(loggedInUser.getUserID());
             return unreadMessages.stream()
-                    .map(message -> new UserMessageDTO(
-                            message.getId(),
-                            message.getSenderId(),
-                            message.getReceiverId(),
-                            message.getContent(),
-                            message.getContentType(),
-                            message.getMedia() != null ? new MediaFileDTO(message.getMedia()): null,
-                            message.getStatus(),
-                            message.getTimestamp()))
+                    .map(MessageMapper::toDto)
                     .collect(Collectors.toList());
         } else {
             throw new Exception("Invalid scenario, didn't find logged-in user");
         }
     }
 
-    public List<LastConversation> getLastMessages() throws Exception {
+    public List<ConversationSummary> getConversationSummary() throws Exception {
         User loggedInUser = ChatMateHelper.getLoggedInUser();
         if (loggedInUser != null) {
             return messageRepository.getLastConversations(loggedInUser.getUserID());
@@ -153,15 +136,7 @@ public class MessageService {
         // Adding new message to DB
         Message message = saveMessage(newMessage);
         message.setStatus(MessageStatus.DELIVERED);
-        UserMessageDTO savedMessageDTO = new UserMessageDTO(
-                message.getId(),
-                message.getSenderId(),
-                message.getReceiverId(),
-                message.getContent(),
-                message.getContentType(),
-                null,
-                message.getStatus(),
-                message.getTimestamp());
+        UserMessageDTO savedMessageDTO = MessageMapper.toDto(message);
 
         notificationService.notification(NotificationType.NEW_MESSAGE)
                 .fromUser(savedMessageDTO.senderId())
@@ -202,23 +177,7 @@ public class MessageService {
         Media media = saveMediaFile(messageWithMediaFileDTO.file(), messageWithMediaFileDTO.type());
         Message message = saveMessageWithMedia(messageWithMediaFileDTO, media);
 
-        MediaFileDTO mediaFileDTO = new MediaFileDTO(
-                media.getId(),
-                media.getUrl(),
-                media.getName(),
-                media.getSize(),
-                media.getType()
-        );
-
-        UserMessageDTO savedMessageDTO = new UserMessageDTO(
-                message.getId(),
-                message.getSenderId(),
-                message.getReceiverId(),
-                message.getContent(),
-                message.getContentType(),
-                mediaFileDTO,
-                message.getStatus(),
-                message.getTimestamp());
+        UserMessageDTO savedMessageDTO = MessageMapper.toDto(message, media);
 
         notificationService.notification(NotificationType.NEW_MESSAGE)
                 .fromUser(savedMessageDTO.senderId())

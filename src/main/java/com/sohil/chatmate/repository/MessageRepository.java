@@ -1,9 +1,8 @@
 package com.sohil.chatmate.repository;
 
-import com.sohil.chatmate.dto.UserMessageDTO;
 import com.sohil.chatmate.entity.Message;
 import com.sohil.chatmate.enums.MessageStatus;
-import com.sohil.chatmate.projection.LastConversation;
+import com.sohil.chatmate.projection.ConversationSummary;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -83,12 +82,12 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             	lm.content as content,
             	lm.content_type as contentType,
             	lm.new_messages_count as newMessagesCount,
-            	u.display_name as partnerDisplayName,
+            	u.full_name as partnerFullName,
             	u.user_id as partnerId
             FROM latest_messages lm
             INNER JOIN users u ON (u.user_id=lm.receiver_id or u.user_id=lm.sender_id) and u.user_id !=:userId
             """, nativeQuery = true)
-    List<LastConversation> getLastConversations(@Param("userId") String userId);
+    List<ConversationSummary> getLastConversations(@Param("userId") String userId);
 
     @Transactional
     @Modifying

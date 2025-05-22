@@ -3,8 +3,10 @@ package com.sohil.chatmate.controller;
 
 import com.sohil.chatmate.dto.OnlineStatusDTO;
 import com.sohil.chatmate.dto.UpdateOnlineStatusRequestDTO;
+import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.dto.UserDetailDTO;
 import com.sohil.chatmate.exceptions.UserNotFoundException;
+import com.sohil.chatmate.service.OnlineStatusService;
 import com.sohil.chatmate.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,15 +21,17 @@ import java.util.List;
 public class UserController {
     @Autowired
     UserService userService;
+    @Autowired
+    OnlineStatusService onlineStatusService;
 
     @GetMapping("/")
-    List<UserDetailDTO> getUsersList(){
-        return userService.getAllUsers();
+    List<UserDTO> getUsersList(){
+        return userService.findAllUsers();
     }
 
     @GetMapping("/all")
     ResponseEntity<? extends Object> getAllUsers(){
-        List<UserDetailDTO> allUsers = userService.getAllUsers();
+        List<UserDTO> allUsers = userService.findAllUsers();
         if(allUsers == null){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Unable to finds users list");
         }
@@ -38,7 +42,7 @@ public class UserController {
     @GetMapping("/status/{userId}")
     ResponseEntity<Object> getUserStatus(@PathVariable String userId){
         try {
-            OnlineStatusDTO onlineStatus = userService.getOnlineStatus(userId);
+            OnlineStatusDTO onlineStatus = onlineStatusService.getOnlineStatus(userId);
             return ResponseEntity.ok(onlineStatus);
         } catch (UserNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
@@ -49,7 +53,7 @@ public class UserController {
     //TIP: Don't forgot @RequestBody
     public ResponseEntity<Object> updateOnlineStatus(@RequestBody UpdateOnlineStatusRequestDTO updateOnlineStatusRequestDTO){
         try {
-            userService.updateOnlineStatus(updateOnlineStatusRequestDTO);
+            onlineStatusService.updateOnlineStatus(updateOnlineStatusRequestDTO);
             return ResponseEntity.ok(updateOnlineStatusRequestDTO);
         } catch (UserNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
