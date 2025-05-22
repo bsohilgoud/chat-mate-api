@@ -1,0 +1,157 @@
+package com.sohil.chatmate.service.impl;
+
+import com.sohil.chatmate.dto.UserDTO;
+import com.sohil.chatmate.dto.UserLoginDTO;
+import com.sohil.chatmate.dto.UserRegistrationDTO;
+import com.sohil.chatmate.entity.OnlineStatus;
+import com.sohil.chatmate.entity.User;
+import com.sohil.chatmate.enums.AuthProvider;
+import com.sohil.chatmate.enums.NotificationType;
+import com.sohil.chatmate.exceptions.UsernameAlreadyExistsException;
+import com.sohil.chatmate.helper.ChatMateHelper;
+import com.sohil.chatmate.helper.NotificationService;
+import com.sohil.chatmate.mapper.UserMapper;
+import com.sohil.chatmate.service.AuthService;
+import com.sohil.chatmate.service.UserService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class AuthServiceImpl implements AuthService {
+
+    OnlineStatusServiceImpl onlineStatusService;
+    NotificationService notificationService;
+    UserService userService;
+
+    public AuthServiceImpl(OnlineStatusServiceImpl onlineStatusService, NotificationService notificationService, UserService userService) {
+        this.onlineStatusService = onlineStatusService;
+        this.notificationService = notificationService;
+        this.userService = userService;
+    }
+
+    @Override
+    public UserDTO login(UserLoginDTO userLoginDTO) {
+        String username = userLoginDTO.username();
+        String password = userLoginDTO.password();
+
+        User user = userService.findUserByUsername(username);
+
+        if (!isValidUser(user, password)) {
+            throw new BadCredentialsException("!!!Invalid Credentials");
+        }
+
+        setAuthenticationInSecurityContext(user);
+
+        String userID = user.getUserID();
+        onlineStatusService.createOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
+
+        notificationService.notification(NotificationType.USER_ONLINE)
+                .fromUser(userID)
+                .send();
+
+        return UserMapper.toDto(user);
+    }
+
+    @Override
+    public void logout(HttpSession session) {
+        User loggedInUser = ChatMateHelper.getLoggedInUser();
+
+        String userID = loggedInUser.getUserID();
+        SecurityContextHolder.clearContext();
+        onlineStatusService.updateOnlineStatus(userID, OnlineStatus.StatusType.OFFLINE);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("userId", userID);
+        session.removeAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+
+        notificationService.notification(NotificationType.USER_OFFLINE)
+                .fromUser(userID)
+                .send();
+    }
+
+    @Override
+    public UserDTO signUp(UserRegistrationDTO userRegistrationDTO) {
+        String username = userRegistrationDTO.username();
+        if(userService.existsByUsername(username)){
+            throw new UsernameAlreadyExistsException(username + ": username already exists !!");
+        }
+
+        LocalDateTime time = LocalDateTime.now();
+        User user = User.builder()
+                .username(userRegistrationDTO.username())
+                .email(userRegistrationDTO.username())
+                .password(userRegistrationDTO.password())
+                .fullName(userRegistrationDTO.displayName())
+                .authProvider(AuthProvider.LOCAL)
+                .createdAt(time)
+                .updatedAt(time)
+                .build();
+
+        User newUser = userService.createUser(user);
+        onlineStatusService.createOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
+
+        return UserMapper.toDto(user);
+    }
+
+
+    public UserDTO oauthSignIn(String email, String name, String profileUrl, String providerId, AuthProvider authProvider) {
+        User user;
+        if(userService.existsByUsername(email)){
+            User newUser = User.builder()
+                    .username(email)
+                    .fullName(name)
+                    .profileUrl(profileUrl)
+                    .providerId(providerId)
+                    .authProvider(authProvider)
+                    .build();
+
+            user = userService.createUser(newUser);
+            onlineStatusService.createOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
+        } else {
+            user = userService.findUserByUsername(email);
+        }
+
+        setAuthenticationInSecurityContext(user);
+
+        String userID = user.getUserID();
+        onlineStatusService.updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
+
+        notificationService.notification(NotificationType.USER_ONLINE)
+                .fromUser(userID)
+                .send();
+
+        return UserMapper.toDto(user);
+    }
+
+
+    private boolean isValidUser(User user, String password) {
+        return user != null && password.equals(user.getPassword());
+    }
+
+    private void setAuthenticationInSecurityContext(User user){
+        // Create authentication token
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user, null, authorities
+        );
+
+        // Set authentication in security context
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        System.out.println("===============================");
+        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
+        System.out.println("===============================");
+    }
+}
