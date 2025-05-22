@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex, HttpServletRequest request) {
         ApiResponse<Object> response = ApiResponse.error(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred: \" + ex.getMessage()", request.getRequestURI());
+                HttpStatus.INTERNAL_SERVER_ERROR.value(), "An unexpected error occurred: \n\n" + ex.getMessage(), request.getRequestURI());
         return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
