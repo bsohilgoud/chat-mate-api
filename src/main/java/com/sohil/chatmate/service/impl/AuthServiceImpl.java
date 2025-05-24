@@ -9,11 +9,14 @@ import com.sohil.chatmate.enums.AuthProvider;
 import com.sohil.chatmate.enums.NotificationType;
 import com.sohil.chatmate.exceptions.UsernameAlreadyExistsException;
 import com.sohil.chatmate.helper.ChatMateHelper;
+import com.sohil.chatmate.helper.JWTHelper;
 import com.sohil.chatmate.helper.NotificationService;
 import com.sohil.chatmate.mapper.UserMapper;
+import com.sohil.chatmate.security.UserPrinciple;
 import com.sohil.chatmate.service.AuthService;
 import com.sohil.chatmate.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,6 +38,9 @@ public class AuthServiceImpl implements AuthService {
     NotificationService notificationService;
     UserService userService;
 
+    @Autowired
+    JWTHelper jwtHelper;
+
     public AuthServiceImpl(OnlineStatusServiceImpl onlineStatusService, NotificationService notificationService, UserService userService) {
         this.onlineStatusService = onlineStatusService;
         this.notificationService = notificationService;
@@ -42,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserDTO login(UserLoginDTO userLoginDTO) {
+    public Map<String, String> login(UserLoginDTO userLoginDTO) {
         String username = userLoginDTO.username();
         String password = userLoginDTO.password();
 
@@ -61,12 +67,18 @@ public class AuthServiceImpl implements AuthService {
                 .fromUser(userID)
                 .send();
 
-        return UserMapper.toDto(user);
+        HashMap<String, Object> claims = new HashMap(3);
+        claims.put("username", user.getUsername());
+        claims.put("fullName", user.getFullName());
+
+        String jwtToken = jwtHelper.generateAccessToken(userID, claims);
+
+        return Map.of("token", jwtToken);
     }
 
     @Override
     public void logout(HttpSession session) {
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
 
         String userID = loggedInUser.getUserID();
         SecurityContextHolder.clearContext();
@@ -102,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
         User newUser = userService.createUser(user);
         onlineStatusService.createOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
 
-        return UserMapper.toDto(user);
+        return UserMapper.toDto(newUser);
     }
 
 
@@ -142,16 +154,17 @@ public class AuthServiceImpl implements AuthService {
 
     private void setAuthenticationInSecurityContext(User user){
         // Create authentication token
+        UserPrinciple userPrinciple = UserPrinciple.from(user);
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                user, null, authorities
+                userPrinciple, null, authorities
         );
 
         // Set authentication in security context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        System.out.println("===============================");
+        System.out.println("===================================================================");
         System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
-        System.out.println("===============================");
+        System.out.println("===================================================================");
     }
 }

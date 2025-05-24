@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.Map;
 
 import static com.sohil.chatmate.helper.ChatMateHelper.storeSecurityContextInSession;
 
@@ -51,10 +52,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<UserDTO>> login(@RequestBody UserLoginDTO userLoginDTO, HttpSession session, HttpServletRequest request) {
-        UserDTO responseData = authService.login(userLoginDTO);
-        storeSecurityContextInSession(session);
-
+    public ResponseEntity<ApiResponse<Map<String, String>>> login(@RequestBody UserLoginDTO userLoginDTO, HttpSession session, HttpServletRequest request) {
+        Map<String, String> responseData = authService.login(userLoginDTO);
         return ApiResponse.success(HttpStatus.OK.value(), responseData, "User login successful", request.getRequestURI());
     }
 

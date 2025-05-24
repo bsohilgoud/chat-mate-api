@@ -1,22 +1,24 @@
 package com.sohil.chatmate.helper;
 
-import com.sohil.chatmate.entity.User;
+import com.sohil.chatmate.security.UserPrinciple;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 
-public  class ChatMateHelper {
+public class ChatMateHelper {
 
-    public static User getLoggedInUser(){
-        User currentLoggedInUser = null;
+    public static UserPrinciple getLoggedInUserPrinciple(){
+        UserPrinciple currentLoggedInUser = null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         try {
-             currentLoggedInUser = (User) authentication.getPrincipal();
+             currentLoggedInUser = (UserPrinciple) authentication.getPrincipal();
         } catch (Exception e){
-            System.out.println(e);
+           throw new BadCredentialsException("Invalid User principle");
         }
+
         return currentLoggedInUser;
     }
 

@@ -32,6 +32,8 @@ spring:
             authorization-grant-type: authorization_code
             redirect-uri-template: "{baseUrl}/{action}/oauth2/code/{registrationId}"
             scope: openid,profile,email
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
   servlet:
     multipart:
       location: D:\\Projects\\chat_mate_project\\chat-mate-api\\
