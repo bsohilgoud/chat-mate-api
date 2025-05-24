@@ -3,7 +3,6 @@ package com.sohil.chatmate.service;
 import com.sohil.chatmate.dto.*;
 import com.sohil.chatmate.entity.Media;
 import com.sohil.chatmate.entity.Message;
-import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.enums.ContentType;
 import com.sohil.chatmate.enums.MessageStatus;
 import com.sohil.chatmate.enums.NotificationType;
@@ -13,6 +12,7 @@ import com.sohil.chatmate.mapper.MessageMapper;
 import com.sohil.chatmate.projection.ConversationSummary;
 import com.sohil.chatmate.repository.MediaRepository;
 import com.sohil.chatmate.repository.MessageRepository;
+import com.sohil.chatmate.security.UserPrinciple;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -84,12 +84,8 @@ public class MessageService {
         MessageStatus fromStatus = bulkStatusUpdateRequestDTO.fromStatus();
         MessageStatus toStatus = bulkStatusUpdateRequestDTO.toStatus();
         String partnerId = bulkStatusUpdateRequestDTO.partnerId();
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
-        if (loggedInUser != null) {
-            messageRepository.bulkStatusUpdate(loggedInUser.getUserID(), partnerId, fromStatus, toStatus);
-        } else {
-            throw new Exception("Invalid scenario, didn't find logged-in user");
-        }
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
+        messageRepository.bulkStatusUpdate(loggedInUser.getUserID(), partnerId, fromStatus, toStatus);
 
         notificationService.notification(NotificationType.BULK_MESSAGE_STATUS_UPDATED)
                 .toUser(partnerId)
@@ -98,37 +94,27 @@ public class MessageService {
     }
 
     public List<UserMessageDTO> getChatMessages(String receiverId) throws Exception {
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
-        if (loggedInUser != null) {
-            List<Message> chatMessages = messageRepository.findChatMessages(loggedInUser.getUserID(), receiverId);
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
+        List<Message> chatMessages = messageRepository.findChatMessages(loggedInUser.getUserID(), receiverId);
 
-            return chatMessages.stream()
-                    .map(MessageMapper::toDto)
-                    .collect(Collectors.toList());
-        } else {
-            throw new Exception("Invalid scenario, didn't find logged-in user");
-        }
+        return chatMessages.stream()
+                .map(MessageMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     public List<UserMessageDTO> getUnreadMessage() throws Exception {
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
-        if (loggedInUser != null) {
-            List<Message> unreadMessages = messageRepository.getUnreadMessages(loggedInUser.getUserID());
-            return unreadMessages.stream()
-                    .map(MessageMapper::toDto)
-                    .collect(Collectors.toList());
-        } else {
-            throw new Exception("Invalid scenario, didn't find logged-in user");
-        }
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
+        List<Message> unreadMessages = messageRepository.getUnreadMessages(loggedInUser.getUserID());
+        return unreadMessages.stream()
+                .map(MessageMapper::toDto)
+                .collect(Collectors.toList());
+
     }
 
     public List<ConversationSummary> getConversationSummary() throws Exception {
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
-        if (loggedInUser != null) {
-            return messageRepository.getLastConversations(loggedInUser.getUserID());
-        } else {
-            throw new Exception("Invalid scenario, didn't find logged-in user");
-        }
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
+        return messageRepository.getLastConversations(loggedInUser.getUserID());
+
     }
 
     @Transactional
@@ -168,9 +154,7 @@ public class MessageService {
                 .type(contentType.toString())
                 .build();
 
-        Media savedMedia = mediaRepository.save(media);
-
-        return savedMedia;
+        return mediaRepository.save(media);
     }
 
     public UserMessageDTO newMessageWithMediaFile(MessageWithMediaFileDTO messageWithMediaFileDTO) throws IOException {
@@ -199,7 +183,7 @@ public class MessageService {
     }
 
     public void sendUserTypingNotification(String receiverId) {
-        User loggedInUser = ChatMateHelper.getLoggedInUser();
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
         notificationService.notification(NotificationType.USER_TYPING)
                 .toUser(receiverId)
                 .fromUser(loggedInUser.getUserID())

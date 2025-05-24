@@ -3,6 +3,7 @@ package com.sohil.chatmate.service;
 
 import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.entity.User;
+import com.sohil.chatmate.security.UserPrinciple;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +17,8 @@ public interface UserService {
     List<UserDTO> findAllUsers();
 
     User getUser(String id);
+
+    UserPrinciple getUserPrinciple(String id);
 
     User createUser(User user);
 

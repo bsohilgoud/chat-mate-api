@@ -2,12 +2,11 @@ package com.sohil.chatmate.service.impl;
 
 import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.entity.User;
-import com.sohil.chatmate.helper.NotificationService;
 import com.sohil.chatmate.mapper.UserMapper;
 import com.sohil.chatmate.repository.UserRepository;
+import com.sohil.chatmate.security.UserPrinciple;
 import com.sohil.chatmate.service.UserService;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +17,6 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl implements UserService {
     UserRepository userRepository;
-
-    @Autowired
-    NotificationService notificationService;
 
     public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -83,6 +79,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getUser(String id) {
         return userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("!!!No user found with userId: " + id));
+    }
+
+    @Override
+    public UserPrinciple getUserPrinciple(String id) {
+        User user = userRepository.findById(id).orElseThrow(() -> new UsernameNotFoundException("!!!No user found with userId: " + id));
+        return UserPrinciple.from(user);
     }
 
     public Optional<User> findByUserId(String receiverId) {
