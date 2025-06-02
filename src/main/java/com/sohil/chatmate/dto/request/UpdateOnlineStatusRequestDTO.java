@@ -1,4 +1,4 @@
-package com.sohil.chatmate.dto;
+package com.sohil.chatmate.dto.request;
 
 import com.sohil.chatmate.entity.OnlineStatus;
 
