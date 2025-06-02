@@ -2,12 +2,13 @@ package com.sohil.chatmate.controller;
 
 
 import com.sohil.chatmate.dto.OnlineStatusDTO;
-import com.sohil.chatmate.dto.UpdateOnlineStatusRequestDTO;
+import com.sohil.chatmate.dto.request.UpdateOnlineStatusRequestDTO;
 import com.sohil.chatmate.dto.UserDTO;
-import com.sohil.chatmate.dto.UserDetailDTO;
+import com.sohil.chatmate.dto.response.ApiResponse;
 import com.sohil.chatmate.exceptions.UserNotFoundException;
 import com.sohil.chatmate.service.OnlineStatusService;
 import com.sohil.chatmate.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,18 +26,27 @@ public class UserController {
     OnlineStatusService onlineStatusService;
 
     @GetMapping("/")
-    List<UserDTO> getUsersList(){
-        return userService.findAllUsers();
+    ResponseEntity<ApiResponse<List<UserDTO>>> getUsersList(HttpServletRequest httpServletRequest){
+        List<UserDTO> allUsers = userService.findAllUsers();
+        return ApiResponse.success(HttpStatus.OK.value(), allUsers, httpServletRequest.getRequestURI());
+    }
+
+    @GetMapping("/{userId}")
+    ResponseEntity<ApiResponse<UserDTO>> getUsersList(@PathVariable String userId, HttpServletRequest httpServletRequest){
+        UserDTO userDTO = userService.findUserById(userId);
+        return ApiResponse.success(HttpStatus.OK.value(), userDTO, httpServletRequest.getRequestURI());
+    }
+
+    @GetMapping("/me")
+    ResponseEntity<ApiResponse<UserDTO>> getCurrentUser(HttpServletRequest request){
+        UserDTO currentUser = userService.getCurrentUser();
+       return ApiResponse.success(HttpStatus.OK.value(), currentUser, "Current logged in user", request.getRequestURI());
     }
 
     @GetMapping("/all")
-    ResponseEntity<? extends Object> getAllUsers(){
+    ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers(HttpServletRequest httpServletRequest){
         List<UserDTO> allUsers = userService.findAllUsers();
-        if(allUsers == null){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Unable to finds users list");
-        }
-
-        return ResponseEntity.ok(allUsers);
+        return ApiResponse.success(HttpStatus.OK.value(), allUsers, httpServletRequest.getRequestURI());
     }
 
     @GetMapping("/status/{userId}")

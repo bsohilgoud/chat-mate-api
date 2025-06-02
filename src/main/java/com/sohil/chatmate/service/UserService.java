@@ -16,6 +16,8 @@ public interface UserService {
 
     List<UserDTO> findAllUsers();
 
+    UserDTO findUserById(String id);
+
     User getUser(String id);
 
     UserPrinciple getUserPrinciple(String id);
@@ -29,4 +31,6 @@ public interface UserService {
     boolean existsByUsername(String username);
 
     void changePassword(String userId, String newPassword);
+
+    UserDTO getCurrentUser();
 }

@@ -2,6 +2,7 @@ package com.sohil.chatmate.service.impl;
 
 import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.entity.User;
+import com.sohil.chatmate.helper.ChatMateHelper;
 import com.sohil.chatmate.mapper.UserMapper;
 import com.sohil.chatmate.repository.UserRepository;
 import com.sohil.chatmate.security.UserPrinciple;
@@ -56,6 +57,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDTO getCurrentUser() {
+        UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
+        String userID = loggedInUser.getUserID();
+        User user = getUser(userID);
+
+        return UserMapper.toDto(user);
+    }
+
+    @Override
     public User findUserByEmail(String email) {
         return findUserByUsername(email);
     }
@@ -74,6 +84,12 @@ public class UserServiceImpl implements UserService {
         });
 
         return userDetailDTOList;
+    }
+
+    @Override
+    public UserDTO findUserById(String id) {
+        User user = getUser(id);
+        return UserMapper.toDto(user);
     }
 
     @Override
