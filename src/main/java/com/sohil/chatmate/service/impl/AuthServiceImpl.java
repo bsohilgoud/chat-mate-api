@@ -1,21 +1,22 @@
 package com.sohil.chatmate.service.impl;
 
 import com.sohil.chatmate.dto.UserDTO;
-import com.sohil.chatmate.dto.UserLoginDTO;
-import com.sohil.chatmate.dto.UserRegistrationDTO;
+import com.sohil.chatmate.dto.request.LoginRequestDTO;
+import com.sohil.chatmate.dto.request.RegistrationRequestDTO;
 import com.sohil.chatmate.entity.OnlineStatus;
 import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.enums.AuthProvider;
 import com.sohil.chatmate.enums.NotificationType;
 import com.sohil.chatmate.exceptions.UsernameAlreadyExistsException;
 import com.sohil.chatmate.helper.ChatMateHelper;
-import com.sohil.chatmate.helper.JWTHelper;
+import com.sohil.chatmate.security.jwt.JWTHelper;
 import com.sohil.chatmate.helper.NotificationService;
 import com.sohil.chatmate.mapper.UserMapper;
 import com.sohil.chatmate.security.UserPrinciple;
 import com.sohil.chatmate.service.AuthService;
 import com.sohil.chatmate.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class AuthServiceImpl implements AuthService {
 
     OnlineStatusServiceImpl onlineStatusService;
@@ -48,9 +50,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Map<String, String> login(UserLoginDTO userLoginDTO) {
-        String username = userLoginDTO.username();
-        String password = userLoginDTO.password();
+    public Map<String, String> login(LoginRequestDTO loginRequestDTO) {
+        String username = loginRequestDTO.username();
+        String password = loginRequestDTO.password();
 
         User user = userService.findUserByUsername(username);
 
@@ -94,18 +96,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public UserDTO signUp(UserRegistrationDTO userRegistrationDTO) {
-        String username = userRegistrationDTO.username();
+    public UserDTO signUp(RegistrationRequestDTO registrationRequestDTO) {
+        String username = registrationRequestDTO.username();
         if(userService.existsByUsername(username)){
             throw new UsernameAlreadyExistsException(username + ": username already exists !!");
         }
 
         LocalDateTime time = LocalDateTime.now();
         User user = User.builder()
-                .username(userRegistrationDTO.username())
-                .email(userRegistrationDTO.username())
-                .password(userRegistrationDTO.password())
-                .fullName(userRegistrationDTO.displayName())
+                .username(registrationRequestDTO.username())
+                .email(registrationRequestDTO.username())
+                .password(registrationRequestDTO.password())
+                .fullName(registrationRequestDTO.displayName())
                 .authProvider(AuthProvider.LOCAL)
                 .createdAt(time)
                 .updatedAt(time)
@@ -163,8 +165,9 @@ public class AuthServiceImpl implements AuthService {
         // Set authentication in security context
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        System.out.println("===================================================================");
-        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
-        System.out.println("===================================================================");
+        log.info("User logged: " + user.getFullName());
+//        System.out.println("===================================================================");
+//        System.out.println("Added logged in user to SecurityContextHolder :  " + authentication);
+//        System.out.println("===================================================================");
     }
 }

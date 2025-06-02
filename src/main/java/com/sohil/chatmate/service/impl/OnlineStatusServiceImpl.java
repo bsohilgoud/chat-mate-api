@@ -1,7 +1,7 @@
 package com.sohil.chatmate.service.impl;
 
 import com.sohil.chatmate.dto.OnlineStatusDTO;
-import com.sohil.chatmate.dto.UpdateOnlineStatusRequestDTO;
+import com.sohil.chatmate.dto.request.UpdateOnlineStatusRequestDTO;
 import com.sohil.chatmate.entity.OnlineStatus;
 import com.sohil.chatmate.exceptions.UserNotFoundException;
 import com.sohil.chatmate.repository.OnlineStatusRepository;

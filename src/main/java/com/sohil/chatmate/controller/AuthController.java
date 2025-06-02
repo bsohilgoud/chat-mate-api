@@ -1,12 +1,12 @@
 package com.sohil.chatmate.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.sohil.chatmate.dto.ApiResponse;
+import com.sohil.chatmate.dto.response.ApiResponse;
 import com.sohil.chatmate.dto.UserDTO;
-import com.sohil.chatmate.dto.UserLoginDTO;
-import com.sohil.chatmate.dto.UserRegistrationDTO;
+import com.sohil.chatmate.dto.request.LoginRequestDTO;
+import com.sohil.chatmate.dto.request.RegistrationRequestDTO;
 import com.sohil.chatmate.enums.AuthProvider;
-import com.sohil.chatmate.helper.GoogleOAuthHelper;
+import com.sohil.chatmate.security.oauth.GoogleOAuthHelper;
 import com.sohil.chatmate.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -36,8 +36,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserDTO>> register(@RequestBody UserRegistrationDTO userRegistrationDTO, HttpServletRequest request) {
-        UserDTO responseData = authService.signUp(userRegistrationDTO);
+    public ResponseEntity<ApiResponse<UserDTO>> register(@RequestBody RegistrationRequestDTO registrationRequestDTO, HttpServletRequest request) {
+        UserDTO responseData = authService.signUp(registrationRequestDTO);
 
         return ApiResponse.success(HttpStatus.CREATED.value(), responseData, "User registration successful", request.getRequestURI());
 //        // TIP: Lombok builder is by default private package so we need to use the static builder() instead of new ApiResponseBuilder
@@ -52,8 +52,8 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Map<String, String>>> login(@RequestBody UserLoginDTO userLoginDTO, HttpSession session, HttpServletRequest request) {
-        Map<String, String> responseData = authService.login(userLoginDTO);
+    public ResponseEntity<ApiResponse<Map<String, String>>> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpSession session, HttpServletRequest request) {
+        Map<String, String> responseData = authService.login(loginRequestDTO);
         return ApiResponse.success(HttpStatus.OK.value(), responseData, "User login successful", request.getRequestURI());
     }
 

@@ -1,6 +1,7 @@
 package com.sohil.chatmate.service;
 
 import com.sohil.chatmate.dto.*;
+import com.sohil.chatmate.dto.request.BatchStatusUpdateRequestDTO;
 import com.sohil.chatmate.entity.Media;
 import com.sohil.chatmate.entity.Message;
 import com.sohil.chatmate.enums.ContentType;

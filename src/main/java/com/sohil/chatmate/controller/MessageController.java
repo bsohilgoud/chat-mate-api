@@ -1,6 +1,9 @@
 package com.sohil.chatmate.controller;
 
 import com.sohil.chatmate.dto.*;
+import com.sohil.chatmate.dto.request.BatchStatusUpdateRequestDTO;
+import com.sohil.chatmate.dto.request.StatusUpdateRequestDTO;
+import com.sohil.chatmate.dto.response.ApiResponse;
 import com.sohil.chatmate.projection.ConversationSummary;
 import com.sohil.chatmate.service.MessageService;
 import com.sohil.chatmate.service.UserService;
