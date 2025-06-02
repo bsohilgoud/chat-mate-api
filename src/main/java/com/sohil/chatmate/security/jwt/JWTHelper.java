@@ -1,4 +1,4 @@
-package com.sohil.chatmate.helper;
+package com.sohil.chatmate.security.jwt;
 
 import com.sohil.chatmate.security.UserPrinciple;
 import io.jsonwebtoken.JwtException;

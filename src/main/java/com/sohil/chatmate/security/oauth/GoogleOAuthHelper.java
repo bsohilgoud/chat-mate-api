@@ -1,4 +1,4 @@
-package com.sohil.chatmate.helper;
+package com.sohil.chatmate.security.oauth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;

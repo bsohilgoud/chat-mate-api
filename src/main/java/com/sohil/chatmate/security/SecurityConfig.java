@@ -1,7 +1,6 @@
 package com.sohil.chatmate.security;
 
-import com.sohil.chatmate.filters.JWTAuthFilter;
-import jakarta.servlet.http.HttpServletResponse;
+import com.sohil.chatmate.security.jwt.JWTAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +15,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.Enumeration;
 
 @Configuration
 @EnableWebSecurity
