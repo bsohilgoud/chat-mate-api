@@ -82,8 +82,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             	lm.content as content,
             	lm.content_type as contentType,
             	lm.new_messages_count as newMessagesCount,
-            	u.full_name as partnerFullName,
-            	u.user_id as partnerId
+                u.user_id AS partnerId,
+                u.full_name AS partnerFullName,
+                u.profile_url AS partnerProfileUrl
             FROM latest_messages lm
             INNER JOIN users u ON (u.user_id=lm.receiver_id or u.user_id=lm.sender_id) and u.user_id !=:userId
             """, nativeQuery = true)

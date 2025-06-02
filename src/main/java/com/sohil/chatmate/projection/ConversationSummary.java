@@ -10,6 +10,7 @@ public interface ConversationSummary {
     String getContent();
     String getContentType();
     Integer getNewMessagesCount();
-    String getPartnerFullName();
     String getPartnerId();
+    String getPartnerFullName();
+    String getPartnerProfileUrl();
 }
