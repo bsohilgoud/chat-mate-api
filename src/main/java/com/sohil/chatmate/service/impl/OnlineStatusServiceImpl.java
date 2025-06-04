@@ -3,6 +3,7 @@ package com.sohil.chatmate.service.impl;
 import com.sohil.chatmate.dto.OnlineStatusDTO;
 import com.sohil.chatmate.dto.request.UpdateOnlineStatusRequestDTO;
 import com.sohil.chatmate.entity.OnlineStatus;
+import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.exceptions.UserNotFoundException;
 import com.sohil.chatmate.repository.OnlineStatusRepository;
 import com.sohil.chatmate.service.OnlineStatusService;
@@ -21,19 +22,19 @@ public class OnlineStatusServiceImpl implements OnlineStatusService {
     }
 
     @Override
-    public void createOnlineStatus(String userId, OnlineStatus.StatusType statusType) {
-        OnlineStatus userOnlineStatus = new OnlineStatus(userId,statusType, LocalDateTime.now());
+    public void createOnlineStatus(User user, OnlineStatus.StatusType statusType) {
+        OnlineStatus userOnlineStatus = OnlineStatus.builder()
+                .user(user)
+                .status(OnlineStatus.StatusType.ONLINE)
+                .lastSeen(LocalDateTime.now())
+                .build();
         onlineStatusRepository.save(userOnlineStatus);
     }
 
     @Override
     @Transactional
     public void updateOnlineStatus(String userId, OnlineStatus.StatusType statusType) {
-        OnlineStatus onlineStatus = onlineStatusRepository.getReferenceById(userId);
-
-        onlineStatus.setStatus(statusType);
-        onlineStatus.setLastSeen(LocalDateTime.now());
-        onlineStatusRepository.save(onlineStatus);
+        onlineStatusRepository.updateStatus(userId, statusType, LocalDateTime.now());
     }
 
     @Override
@@ -51,7 +52,7 @@ public class OnlineStatusServiceImpl implements OnlineStatusService {
         }
 
         OnlineStatus onlineStatus = onlineStatusRepository.getReferenceById(userId);
-        return new OnlineStatusDTO(onlineStatus.getUserId(), onlineStatus.getLastSeen(), onlineStatus.getStatus().toString());
+        return new OnlineStatusDTO(onlineStatus.getUser().getUserId(), onlineStatus.getLastSeen(), onlineStatus.getStatus().toString());
     }
 
 }

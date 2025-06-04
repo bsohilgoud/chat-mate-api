@@ -20,7 +20,7 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "user_id", updatable = false, unique = true, nullable = false)
-    private String userID;
+    private String userId;
 
     @Column(name = "email", unique = true)
     private String email;
@@ -58,6 +58,9 @@ public class User {
     @Column(name = "primary_login_method")
     @Enumerated(EnumType.STRING)
     private LoginMethod primaryLoginMethod;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private OnlineStatus onlineStatus;
 
 
     public enum LoginMethod {

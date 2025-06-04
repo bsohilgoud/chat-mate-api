@@ -22,6 +22,6 @@ public class UserPrinciple {
     }
 
     public static UserPrinciple from(User user){
-        return new UserPrinciple(user.getUserID(), user.getUsername(), user.getEmail(), null, true);
+        return new UserPrinciple(user.getUserId(), user.getUsername(), user.getEmail(), null, true);
     }
 }

@@ -2,10 +2,7 @@ package com.sohil.chatmate.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -15,11 +12,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Setter
 @Getter
+@Builder
 public class OnlineStatus {
 
     @Id
     @Column(name = "user_id")
-    private String userId; // Using user_id as primary key
+    private String id; // This will be the user_id
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    @MapsId // Maps the id property to the User's primary key
+    private User user;
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
