@@ -46,4 +46,7 @@ public class Message {
     @Enumerated(EnumType.STRING)
     MessageStatus status;
 
+    @Column(name = "reply_to_message_id")
+    private Long replyToMessageId;
+
 }

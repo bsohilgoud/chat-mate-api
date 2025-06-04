@@ -14,9 +14,11 @@ public class MessageMapper {
                 message.getReceiverId(),
                 message.getContent(),
                 message.getContentType(),
-                message.getMedia() != null ? new MediaFileDTO(message.getMedia()): null,
+                message.getMedia() != null ? new MediaFileDTO(message.getMedia()) : null,
                 message.getStatus(),
-                message.getTimestamp());
+                message.getTimestamp(),
+                message.getReplyToMessageId()
+        );
     }
 
     public static UserMessageDTO toDto(Message message, MediaFileDTO mediaFileDTO) {
@@ -28,7 +30,10 @@ public class MessageMapper {
                 message.getContentType(),
                 mediaFileDTO,
                 message.getStatus(),
-                message.getTimestamp());
+                message.getTimestamp(),
+                message.getReplyToMessageId()
+
+        );
     }
 
     public static UserMessageDTO toDto(Message message, Media media) {
@@ -42,7 +47,9 @@ public class MessageMapper {
                 message.getContentType(),
                 mediaFileDTO,
                 message.getStatus(),
-                message.getTimestamp());
+                message.getTimestamp(),
+                message.getReplyToMessageId()
+        );
     }
 
     public static class MediaMapper {
