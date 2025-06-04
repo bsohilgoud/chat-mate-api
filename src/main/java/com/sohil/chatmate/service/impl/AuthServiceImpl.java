@@ -62,8 +62,8 @@ public class AuthServiceImpl implements AuthService {
 
         setAuthenticationInSecurityContext(user);
 
-        String userID = user.getUserID();
-        onlineStatusService.createOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
+        String userID = user.getUserId();
+        onlineStatusService.updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
 
         notificationService.notification(NotificationType.USER_ONLINE)
                 .fromUser(userID)
@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User newUser = userService.createUser(user);
-        onlineStatusService.createOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
+        onlineStatusService.createOnlineStatus(newUser, OnlineStatus.StatusType.ONLINE);
 
         return UserMapper.toDto(newUser);
     }
@@ -132,14 +132,14 @@ public class AuthServiceImpl implements AuthService {
                     .build();
 
             user = userService.createUser(newUser);
-            onlineStatusService.createOnlineStatus(user.getUserID(), OnlineStatus.StatusType.ONLINE);
+            onlineStatusService.createOnlineStatus(user, OnlineStatus.StatusType.ONLINE);
         } else {
             user = userService.findUserByUsername(email);
         }
 
         setAuthenticationInSecurityContext(user);
 
-        String userID = user.getUserID();
+        String userID = user.getUserId();
         onlineStatusService.updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
 
         notificationService.notification(NotificationType.USER_ONLINE)
