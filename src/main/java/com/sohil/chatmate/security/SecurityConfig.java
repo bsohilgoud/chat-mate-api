@@ -36,7 +36,9 @@ public class SecurityConfig {
                                         "/auth/google",
                                         "/v3/api-docs/**",
                                         "/swagger-ui/**",
-                                        "/swagger-ui.html")
+                                        "/swagger-ui.html",
+                                "/ws_server/**"
+                                )
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
@@ -61,7 +63,7 @@ public class SecurityConfig {
         // Or to allow any origin (not recommended for production):
         // configuration.setAllowedOriginPatterns(Collections.singletonList("*"));
 
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 
