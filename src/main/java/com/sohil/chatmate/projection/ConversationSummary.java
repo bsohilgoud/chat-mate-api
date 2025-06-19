@@ -1,5 +1,7 @@
 package com.sohil.chatmate.projection;
 
+import com.sohil.chatmate.enums.MessageStatus;
+
 import java.time.LocalDateTime;
 
 public interface ConversationSummary {
@@ -9,8 +11,11 @@ public interface ConversationSummary {
     LocalDateTime getTimestamp();
     String getContent();
     String getContentType();
+    MessageStatus getStatus();
     Integer getNewMessagesCount();
     String getPartnerId();
     String getPartnerFullName();
     String getPartnerProfileUrl();
+    String getPartnerOnlineStatus();
+    LocalDateTime getPartnerLastSeen();
 }
