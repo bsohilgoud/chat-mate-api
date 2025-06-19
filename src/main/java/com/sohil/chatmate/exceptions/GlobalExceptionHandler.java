@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -40,6 +41,17 @@ public class GlobalExceptionHandler {
         String method = request.getMethod();
 
         log.warn("User not found - Method: {}, Endpoint: {}, Message: {}", method, endpoint, ex.getMessage());
+
+        ApiResponse<Object> response = ApiResponse.error(HttpStatus.NOT_FOUND.value(), ex.getMessage(), request.getRequestURI());
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = UsernameNotFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUsernameNotFoundException(UsernameNotFoundException ex, HttpServletRequest request) {
+        String endpoint = request.getRequestURI();
+        String method = request.getMethod();
+
+        log.warn("Username not found - Method: {}, Endpoint: {}, Message: {}", method, endpoint, ex.getMessage());
 
         ApiResponse<Object> response = ApiResponse.error(HttpStatus.NOT_FOUND.value(), ex.getMessage(), request.getRequestURI());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);

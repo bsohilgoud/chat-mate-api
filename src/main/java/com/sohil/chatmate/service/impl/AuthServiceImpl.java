@@ -57,7 +57,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.findUserByUsername(username);
 
         if (!isValidUser(user, password)) {
-            throw new BadCredentialsException("!!!Invalid Credentials");
+            throw new BadCredentialsException("Invalid Credentials!!");
         }
 
         setAuthenticationInSecurityContext(user);
