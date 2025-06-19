@@ -13,6 +13,8 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
+
+        System.out.println("Inside WS interceptor");
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
         HttpSession session = (HttpSession) accessor.getSessionAttributes().get("SPRING_SECURITY_CONTEXT");
