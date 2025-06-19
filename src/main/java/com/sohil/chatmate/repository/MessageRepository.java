@@ -62,6 +62,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             		m.timestamp,
             		m.content,
             	    m.content_type,
+            	    m.status,
             		lc.new_messages_count
             	FROM messages m
             	JOIN latest_conversations lc
@@ -73,21 +74,35 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             			)
             		)
             	ORDER BY m.timestamp DESC
+            ),
+
+            users_with_status AS (
+                    SELECT
+                    u.user_id AS user_id,
+                    u.full_name AS full_name,
+                    u.profile_url AS profile_url,
+                    os.status AS online_status,
+                    os.last_seen AS last_seen
+                    FROM users u
+                    INNER JOIN online_status os ON (u.user_id = os.user_id and u.user_id != :userId)
             )
-                        
+
             SELECT
-            	lm.sender_id as senderId,
-            	lm.receiver_id as receiverId,
-            	lm.timestamp as timestamp,
-            	lm.content as content,
-            	lm.content_type as contentType,
-            	lm.new_messages_count as newMessagesCount,
-                u.user_id AS partnerId,
-                u.full_name AS partnerFullName,
-                u.profile_url AS partnerProfileUrl
+                lm.sender_id as senderId,
+                lm.receiver_id as receiverId,
+                lm.timestamp as timestamp,
+                lm.content as content,
+                lm.content_type as contentType,
+                lm.new_messages_count as newMessagesCount,
+                lm.status as status,
+                us.user_id AS partnerId,
+                us.full_name AS partnerFullName,
+                us.profile_url AS partnerProfileUrl,
+                us.online_status AS partnerOnlineStatus,
+                us.last_seen AS partnerLastSeen
             FROM latest_messages lm
-            INNER JOIN users u ON (u.user_id=lm.receiver_id or u.user_id=lm.sender_id) and u.user_id !=:userId
-            """, nativeQuery = true)
+            INNER JOIN users_with_status us ON (us.user_id=lm.receiver_id or us.user_id=lm.sender_id)
+            ORDER BY lm.timestamp""", nativeQuery = true)
     List<ConversationSummary> getLastConversations(@Param("userId") String userId);
 
     @Transactional

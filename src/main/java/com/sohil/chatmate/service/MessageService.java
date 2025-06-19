@@ -31,11 +31,12 @@ public class MessageService {
 
     MessageRepository messageRepository;
     NotificationService notificationService;
-    private static final String MEDIA_FILE_UPLOAD_DIR = "uploads/";
 
     @Autowired
-    MediaRepository mediaRepository;
+    UserService userService;
 
+    @Autowired
+    MediaService mediaService;
 
     public MessageService(MessageRepository messageRepository, NotificationService notificationService) {
         this.messageRepository = messageRepository;
@@ -74,8 +75,11 @@ public class MessageService {
         messageRepository.updateMessageStatus(id, messageStatus);
 
         Message message = messageRepository.findById(id).orElseThrow();
+
+        UserPrinciple loggedInUserPrinciple = ChatMateHelper.getLoggedInUserPrinciple();
         notificationService.notification(NotificationType.MESSAGE_STATUS_UPDATED)
-                .toUser(message.getReceiverId())
+                .fromUser(loggedInUserPrinciple.getUserID())
+                .toUser(message.getSenderId())
                 .withBody(Map.of("messageId", id, "status", messageStatus))
                 .send();
 
@@ -88,9 +92,12 @@ public class MessageService {
         UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
         messageRepository.bulkStatusUpdate(loggedInUser.getUserID(), partnerId, fromStatus, toStatus);
 
-        notificationService.notification(NotificationType.BULK_MESSAGE_STATUS_UPDATED)
+        UserPrinciple loggedInUserPrinciple = ChatMateHelper.getLoggedInUserPrinciple();
+
+        notificationService.notification(NotificationType.BATCH_MESSAGE_STATUS_UPDATE)
+                .fromUser(loggedInUserPrinciple.getUserID())
                 .toUser(partnerId)
-                .withBody(Map.of("status", toStatus))
+                .withBody(Map.of("fromStatus", fromStatus, "toStatus", toStatus))
                 .send();
     }
 
@@ -124,9 +131,11 @@ public class MessageService {
         Message message = saveMessage(newMessage);
         message.setStatus(MessageStatus.DELIVERED);
         UserMessageDTO savedMessageDTO = MessageMapper.toDto(message);
+        String senderId = savedMessageDTO.senderId();
 
+        UserDTO userDTO = userService.findUserById(senderId);
         notificationService.notification(NotificationType.NEW_MESSAGE)
-                .fromUser(savedMessageDTO.senderId())
+                .fromUser(userDTO)
                 .toUser(savedMessageDTO.receiverId())
                 .withBody(savedMessageDTO)
                 .send();
@@ -136,36 +145,17 @@ public class MessageService {
         return savedMessageDTO;
     }
 
-    private Media saveMediaFile(MultipartFile file, ContentType contentType) throws IOException {
-
-        File uploadsFolder = new File(MEDIA_FILE_UPLOAD_DIR);
-        if (!uploadsFolder.exists()) {
-            uploadsFolder.mkdirs();
-        }
-
-        String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        File uploadPath = new File(uploadsFolder, filename);
-
-        file.transferTo(uploadPath);
-
-        Media media = Media.builder()
-                .url(MEDIA_FILE_UPLOAD_DIR + filename)
-                .size(file.getSize())
-                .name(filename)
-                .type(contentType.toString())
-                .build();
-
-        return mediaRepository.save(media);
-    }
 
     public UserMessageDTO newMessageWithMediaFile(MessageWithMediaFileDTO messageWithMediaFileDTO) throws IOException {
-        Media media = saveMediaFile(messageWithMediaFileDTO.file(), messageWithMediaFileDTO.type());
+        Media media = mediaService.saveMediaFile(messageWithMediaFileDTO.file(), messageWithMediaFileDTO.type());
         Message message = saveMessageWithMedia(messageWithMediaFileDTO, media);
 
         UserMessageDTO savedMessageDTO = MessageMapper.toDto(message, media);
+        String senderId = savedMessageDTO.senderId();
 
+        UserDTO userDTO = userService.findUserById(senderId);
         notificationService.notification(NotificationType.NEW_MESSAGE)
-                .fromUser(savedMessageDTO.senderId())
+                .fromUser(userDTO)
                 .toUser(savedMessageDTO.receiverId())
                 .withBody(savedMessageDTO)
                 .send();
@@ -174,17 +164,13 @@ public class MessageService {
 
     }
 
-    public byte[] getMediaFile(String fileUrl) throws IOException {
-        File file = new File(MEDIA_FILE_UPLOAD_DIR + fileUrl);
-        if (!file.exists()) {
-            throw new FileNotFoundException("File not found: " + fileUrl);
-        }
-
-        return Files.readAllBytes(file.toPath());
+    public byte[] getMediaFile(String fileName) throws IOException {
+        return mediaService.getMediaFile(fileName);
     }
 
     public void sendUserTypingNotification(String receiverId) {
         UserPrinciple loggedInUser = ChatMateHelper.getLoggedInUserPrinciple();
+
         notificationService.notification(NotificationType.USER_TYPING)
                 .toUser(receiverId)
                 .fromUser(loggedInUser.getUserID())

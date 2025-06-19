@@ -12,6 +12,9 @@ import lombok.*;
 @ToString
 @Table(name= "media")
 public class Media {
+    /*SELECT pg_get_serial_sequence('media', 'id');
+SELECT MAX(id) FROM media;
+ALTER SEQUENCE media_id_seq RESTART WITH 6;*/
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
