@@ -14,6 +14,6 @@ public interface AuthService {
     Map<String, String> login(LoginRequestDTO loginRequestDTO);
     void logout(HttpSession session);
     UserDTO signUp(RegistrationRequestDTO registrationRequestDTO);
-    UserDTO oauthSignIn(String email, String name, String profileUrl, String providerId, AuthProvider authProvider);
+    Map<String, String> oauthSignIn(String email, String name, String profileUrl, String providerId, AuthProvider authProvider);
 
 }

@@ -66,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
         onlineStatusService.updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
 
         notificationService.notification(NotificationType.USER_ONLINE)
-                .fromUser(userID)
+                .fromUser(UserMapper.toDto(user))
                 .send();
 
         HashMap<String, Object> claims = new HashMap(3);
@@ -120,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    public UserDTO oauthSignIn(String email, String name, String profileUrl, String providerId, AuthProvider authProvider) {
+    public Map<String,String> oauthSignIn(String email, String name, String profileUrl, String providerId, AuthProvider authProvider) {
         User user;
         if(userService.existsByUsername(email)){
             User newUser = User.builder()
@@ -137,16 +137,20 @@ public class AuthServiceImpl implements AuthService {
             user = userService.findUserByUsername(email);
         }
 
-        setAuthenticationInSecurityContext(user);
-
         String userID = user.getUserId();
         onlineStatusService.updateOnlineStatus(userID, OnlineStatus.StatusType.ONLINE);
 
         notificationService.notification(NotificationType.USER_ONLINE)
-                .fromUser(userID)
+                .fromUser(UserMapper.toDto(user))
                 .send();
 
-        return UserMapper.toDto(user);
+        HashMap<String, Object> claims = new HashMap(3);
+        claims.put("username", user.getUsername());
+        claims.put("fullName", user.getFullName());
+
+        String jwtToken = jwtHelper.generateAccessToken(userID, claims);
+
+        return Map.of("token", jwtToken);
     }
 
 

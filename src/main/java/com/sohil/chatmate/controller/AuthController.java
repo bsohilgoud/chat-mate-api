@@ -66,28 +66,28 @@ public class AuthController {
 
 
     @PostMapping("/google")
-    public ResponseEntity<ApiResponse<UserDTO>> oauthLoginWithGoogleAuthCode(@RequestBody GoogleOAuthHelper.GoogleAuthCodeDTO googleAuthCodeDTO, HttpSession session, HttpServletRequest request) throws GeneralSecurityException, IOException {
+    public ResponseEntity<ApiResponse<Map<String, String>>> oauthLoginWithGoogleAuthCode(@RequestBody GoogleOAuthHelper.GoogleAuthCodeDTO googleAuthCodeDTO, HttpSession session, HttpServletRequest request) throws GeneralSecurityException, IOException {
         GoogleIdToken.Payload payload = googleOAuthHelper.oauthLoginWithAuthCode(googleAuthCodeDTO.authCode());
         String email = payload.getEmail();
         String name = (String) payload.get("name");
         String userGoogleId = payload.getSubject();
         String profileUrl = (String) payload.get("picture");
 
-        UserDTO responseData = authService.oauthSignIn(email, name, profileUrl, userGoogleId, AuthProvider.GOOGLE);
-        storeSecurityContextInSession(session);
+        Map<String, String> responseData = authService.oauthSignIn(email, name, profileUrl, userGoogleId, AuthProvider.GOOGLE);
+//        storeSecurityContextInSession(session);
 
         return ApiResponse.success(HttpStatus.OK.value(), responseData, "User login successful", request.getRequestURI());
     }
 
     // NOT Recommended Approach
     @PostMapping("/google/tokenId")
-    public ResponseEntity<ApiResponse<UserDTO>> oauthLoginWithGoogle(@RequestBody GoogleOAuthHelper.GoogleTokenDTO googleTokenDTO, HttpSession session, HttpServletRequest request) throws GeneralSecurityException, IOException {
+    public ResponseEntity<ApiResponse< Map<String, String>>> oauthLoginWithGoogle(@RequestBody GoogleOAuthHelper.GoogleTokenDTO googleTokenDTO, HttpSession session, HttpServletRequest request) throws GeneralSecurityException, IOException {
         GoogleIdToken.Payload payload = googleOAuthHelper.oauthLoginWithTokenID(googleTokenDTO.googleToken());
         String email = payload.getEmail();
         String name = (String) payload.get("name");
         String userGoogleId = payload.getSubject();
         String profileUrl = (String) payload.get("picture");
-        UserDTO responseData = authService.oauthSignIn(email, name, profileUrl, userGoogleId, AuthProvider.GOOGLE);
+        Map<String, String> responseData = authService.oauthSignIn(email, name, profileUrl, userGoogleId, AuthProvider.GOOGLE);
         storeSecurityContextInSession(session);
 
         return ApiResponse.success(HttpStatus.OK.value(), responseData, "User login successful", request.getRequestURI());
