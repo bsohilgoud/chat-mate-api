@@ -6,11 +6,13 @@ import com.sohil.chatmate.dto.request.UpdateOnlineStatusRequestDTO;
 import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.dto.response.ApiResponse;
 import com.sohil.chatmate.entity.Media;
+import com.sohil.chatmate.entity.User;
 import com.sohil.chatmate.enums.ContentType;
 import com.sohil.chatmate.service.MediaService;
 import com.sohil.chatmate.service.OnlineStatusService;
 import com.sohil.chatmate.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@Slf4j
 public class UserController {
     @Autowired
     UserService userService;
@@ -77,7 +80,14 @@ public class UserController {
 
     @GetMapping("/profile/{userId}")
     public ResponseEntity<byte[]> getProfileImage(@PathVariable("userId") String userId) throws IOException {
-        String profileUrl = userService.getUser(userId).getProfileUrl();
+        User user = userService.getUser(userId);
+        log.info("Fetching user profile for user : " + user.getFullName() + ", profileUrl :" + user.getProfileUrl());
+        String profileUrl = user.getProfileUrl();
+        if (profileUrl == null || profileUrl.isEmpty()) {
+            // Returning 204 with no Content with an empty body
+            return ResponseEntity.noContent().build();
+        }
+
         byte[] mediaFile = mediaService.getMediaFromUrl(profileUrl);
         String contentType = Files.probeContentType(Path.of(profileUrl));
 
