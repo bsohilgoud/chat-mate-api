@@ -5,16 +5,25 @@ import com.sohil.chatmate.dto.OnlineStatusDTO;
 import com.sohil.chatmate.dto.request.UpdateOnlineStatusRequestDTO;
 import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.dto.response.ApiResponse;
-import com.sohil.chatmate.exceptions.UserNotFoundException;
+import com.sohil.chatmate.entity.Media;
+import com.sohil.chatmate.enums.ContentType;
+import com.sohil.chatmate.service.MediaService;
 import com.sohil.chatmate.service.OnlineStatusService;
 import com.sohil.chatmate.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -22,8 +31,12 @@ import java.util.List;
 public class UserController {
     @Autowired
     UserService userService;
+
     @Autowired
     OnlineStatusService onlineStatusService;
+
+    @Autowired
+    MediaService mediaService;
 
     @GetMapping("/")
     ResponseEntity<ApiResponse<List<UserDTO>>> getUsersList(HttpServletRequest httpServletRequest){
@@ -50,26 +63,35 @@ public class UserController {
     }
 
     @GetMapping("/status/{userId}")
-    ResponseEntity<Object> getUserStatus(@PathVariable String userId){
-        try {
-            OnlineStatusDTO onlineStatus = onlineStatusService.getOnlineStatus(userId);
-            return ResponseEntity.ok(onlineStatus);
-        } catch (UserNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    ResponseEntity<ApiResponse<OnlineStatusDTO>> getUserStatus(@PathVariable String userId, HttpServletRequest httpServletRequest){
+        OnlineStatusDTO onlineStatus = onlineStatusService.getOnlineStatus(userId);
+        return ApiResponse.success(HttpStatus.OK.value(), onlineStatus, httpServletRequest.getRequestURI());
     }
 
     @PatchMapping("/status/")
     //TIP: Don't forgot @RequestBody
-    public ResponseEntity<Object> updateOnlineStatus(@RequestBody UpdateOnlineStatusRequestDTO updateOnlineStatusRequestDTO){
-        try {
-            onlineStatusService.updateOnlineStatus(updateOnlineStatusRequestDTO);
-            return ResponseEntity.ok(updateOnlineStatusRequestDTO);
-        } catch (UserNotFoundException e){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (Exception exception){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
-        }
+    public ResponseEntity<ApiResponse<Object>> updateOnlineStatus(@RequestBody UpdateOnlineStatusRequestDTO updateOnlineStatusRequestDTO, HttpServletRequest httpServletRequest){
+        onlineStatusService.updateOnlineStatus(updateOnlineStatusRequestDTO);
+        return ApiResponse.success(HttpStatus.OK.value(), null, httpServletRequest.getRequestURI());
     }
 
+    @GetMapping("/profile/{userId}")
+    public ResponseEntity<byte[]> getProfileImage(@PathVariable("userId") String userId) throws IOException {
+        String profileUrl = userService.getUser(userId).getProfileUrl();
+        byte[] mediaFile = mediaService.getMediaFromUrl(profileUrl);
+        String contentType = Files.probeContentType(Path.of(profileUrl));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + profileUrl + "\"")
+                .contentType(MediaType.parseMediaType(contentType != null ? contentType : "application/octet-stream"))
+                .body(mediaFile);
+    }
+
+    @PostMapping("/profile/{userId}")
+    public ResponseEntity<ApiResponse<Map<String, String>>> updateProfileImage(@PathVariable("userId") String userId, @RequestParam("file") MultipartFile multipartFile, HttpServletRequest httpServletRequest) throws IOException {
+        Media media = mediaService.saveMediaFile(multipartFile, ContentType.IMAGE);
+        userService.updateProfileUrl(userId, media.getUrl());
+
+        return ApiResponse.success(HttpStatus.OK.value(), Map.of("profileUrl", media.getUrl()), httpServletRequest.getRequestURI());
+    }
 }

@@ -66,6 +66,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updateProfileUrl(String userId, String profileUrl) {
+        userRepository.updateProfileUrl(userId, profileUrl);
+    }
+
+    @Override
     public User findUserByEmail(String email) {
         return findUserByUsername(email);
     }

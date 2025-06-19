@@ -33,4 +33,6 @@ public interface UserService {
     void changePassword(String userId, String newPassword);
 
     UserDTO getCurrentUser();
+
+    void updateProfileUrl(String userId, String profileUrl);
 }
