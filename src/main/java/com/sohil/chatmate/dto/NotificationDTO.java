@@ -4,7 +4,7 @@ import com.sohil.chatmate.enums.NotificationType;
 
 public record NotificationDTO(
         NotificationType type,
-        String fromUser,
+        Object fromUser,
         String toUser,
         Object body
 ) {}

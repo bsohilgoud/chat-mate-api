@@ -1,6 +1,7 @@
 package com.sohil.chatmate.helper;
 
 import com.sohil.chatmate.dto.NotificationDTO;
+import com.sohil.chatmate.dto.UserDTO;
 import com.sohil.chatmate.enums.NotificationType;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ public class NotificationService {
         private final SimpMessagingTemplate messagingTemplate;
 
         private String toUser = null;
-        private String fromUser;
+        private Object fromUser;
         private Object body;
         private final NotificationType type;
         private boolean isPublic = false;
@@ -45,7 +46,7 @@ public class NotificationService {
             return this;
         }
 
-        public Notification fromUser(String fromUser){
+        public Notification fromUser(Object fromUser){
             this.fromUser = fromUser;
             return this;
         }
