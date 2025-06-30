@@ -10,6 +10,7 @@ import com.sohil.chatmate.security.oauth.GoogleOAuthHelper;
 import com.sohil.chatmate.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ import static com.sohil.chatmate.helper.ChatMateHelper.storeSecurityContextInSes
 
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@Slf4j
 public class AuthController {
 
     AuthService authService;
@@ -36,8 +37,8 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserDTO>> register(@RequestBody RegistrationRequestDTO registrationRequestDTO, HttpServletRequest request) {
-        UserDTO responseData = authService.signUp(registrationRequestDTO);
+    public ResponseEntity<ApiResponse<Map<String, String>>> register(@RequestBody RegistrationRequestDTO registrationRequestDTO, HttpServletRequest request) {
+        Map<String, String> responseData = authService.signUp(registrationRequestDTO);
 
         return ApiResponse.success(HttpStatus.CREATED.value(), responseData, "User registration successful", request.getRequestURI());
 //        // TIP: Lombok builder is by default private package so we need to use the static builder() instead of new ApiResponseBuilder
@@ -53,6 +54,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Map<String, String>>> login(@RequestBody LoginRequestDTO loginRequestDTO, HttpSession session, HttpServletRequest request) {
+        log.info("Got login request from " + loginRequestDTO.username());
         Map<String, String> responseData = authService.login(loginRequestDTO);
         return ApiResponse.success(HttpStatus.OK.value(), responseData, "User login successful", request.getRequestURI());
     }

@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     public boolean existsByUsername(String username) {
         Optional<User> userByUsername = userRepository.findUserByUsername(username);
 
-        return userByUsername.isEmpty();
+        return userByUsername.isPresent();
     }
 
     @Override

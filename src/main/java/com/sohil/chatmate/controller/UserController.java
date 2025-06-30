@@ -29,7 +29,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @Slf4j
 public class UserController {
     @Autowired
@@ -81,7 +80,7 @@ public class UserController {
     @GetMapping("/profile/{userId}")
     public ResponseEntity<byte[]> getProfileImage(@PathVariable("userId") String userId) throws IOException {
         User user = userService.getUser(userId);
-        log.info("Fetching user profile for user : " + user.getFullName() + ", profileUrl :" + user.getProfileUrl());
+//        log.info("Fetching user profile for user : " + user.getFullName() + ", profileUrl :" + user.getProfileUrl());
         String profileUrl = user.getProfileUrl();
         if (profileUrl == null || profileUrl.isEmpty()) {
             // Returning 204 with no Content with an empty body

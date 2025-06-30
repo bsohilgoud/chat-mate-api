@@ -55,8 +55,15 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         // For development
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173"));
+        //configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://192.168.0.100:5173/", "https://*.ngrok.io", "https://*.ngrok-free.app",  "https://4ccf-49-206-59-93.ngrok-free.app"));
 
+
+        configuration.setAllowedOriginPatterns(Arrays.asList(
+                "http://localhost:5173",
+                "http://192.168.0.100:5173",
+                "https://*.ngrok.io",
+                "https://*.ngrok-free.app"
+        ));
         // For production, you'd list your allowed origins
         // configuration.setAllowedOrigins(Arrays.asList("https://yourdomain.com", "https://app.yourdomain.com"));
 

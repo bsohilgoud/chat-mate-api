@@ -63,7 +63,7 @@ public class MessageService {
                 .receiverId(messageWithMediaFileDTO.receiverId())
                 .content(null)
                 .contentType(messageWithMediaFileDTO.type())
-                .status(MessageStatus.PENDING)
+                .status(MessageStatus.DELIVERED)
                 .timestamp(messageWithMediaFileDTO.timestamp())
                 .media(media)
                 .build();
