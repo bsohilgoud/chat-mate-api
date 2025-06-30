@@ -91,12 +91,12 @@ public class AuthServiceImpl implements AuthService {
         session.removeAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
 
         notificationService.notification(NotificationType.USER_OFFLINE)
-                .fromUser(userID)
+                .fromUser(Map.of("id", userID))
                 .send();
     }
 
     @Override
-    public UserDTO signUp(RegistrationRequestDTO registrationRequestDTO) {
+    public Map<String, String> signUp(RegistrationRequestDTO registrationRequestDTO) {
         String username = registrationRequestDTO.username();
         if(userService.existsByUsername(username)){
             throw new UsernameAlreadyExistsException(username + ": username already exists !!");
@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(registrationRequestDTO.username())
                 .email(registrationRequestDTO.username())
                 .password(registrationRequestDTO.password())
-                .fullName(registrationRequestDTO.displayName())
+                .fullName(registrationRequestDTO.fullName())
                 .authProvider(AuthProvider.LOCAL)
                 .createdAt(time)
                 .updatedAt(time)
@@ -116,7 +116,17 @@ public class AuthServiceImpl implements AuthService {
         User newUser = userService.createUser(user);
         onlineStatusService.createOnlineStatus(newUser, OnlineStatus.StatusType.ONLINE);
 
-        return UserMapper.toDto(newUser);
+        notificationService.notification(NotificationType.USER_JOINED)
+                .fromUser(Map.of("id", newUser.getUserId(), "username", newUser.getUsername()))
+                .send();
+
+        HashMap<String, Object> claims = new HashMap(3);
+        claims.put("username", newUser.getUsername());
+        claims.put("fullName", newUser.getFullName());
+
+        String jwtToken = jwtHelper.generateAccessToken(newUser.getUserId(), claims);
+
+        return Map.of("token", jwtToken);
     }
 
 
