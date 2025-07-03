@@ -24,6 +24,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +40,8 @@ public class AuthServiceImpl implements AuthService {
     OnlineStatusServiceImpl onlineStatusService;
     NotificationService notificationService;
     UserService userService;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Autowired
     JWTHelper jwtHelper;
@@ -106,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
         User user = User.builder()
                 .username(registrationRequestDTO.username())
                 .email(registrationRequestDTO.username())
-                .password(registrationRequestDTO.password())
+                .password(passwordEncoder.encode(registrationRequestDTO.password()))
                 .fullName(registrationRequestDTO.fullName())
                 .authProvider(AuthProvider.LOCAL)
                 .createdAt(time)
@@ -132,7 +135,8 @@ public class AuthServiceImpl implements AuthService {
 
     public Map<String,String> oauthSignIn(String email, String name, String profileUrl, String providerId, AuthProvider authProvider) {
         User user;
-        if(userService.existsByUsername(email)){
+        boolean isNewUser = false;
+        if(!userService.existsByUsername(email)){
             User newUser = User.builder()
                     .username(email)
                     .fullName(name)
@@ -143,6 +147,7 @@ public class AuthServiceImpl implements AuthService {
 
             user = userService.createUser(newUser);
             onlineStatusService.createOnlineStatus(user, OnlineStatus.StatusType.ONLINE);
+            isNewUser = true;
         } else {
             user = userService.findUserByUsername(email);
         }
@@ -160,12 +165,13 @@ public class AuthServiceImpl implements AuthService {
 
         String jwtToken = jwtHelper.generateAccessToken(userID, claims);
 
-        return Map.of("token", jwtToken);
+        return Map.of("token", jwtToken, "newUser", String.valueOf(isNewUser));
     }
 
 
     private boolean isValidUser(User user, String password) {
-        return user != null && password.equals(user.getPassword());
+//        return user != null && password.equals(user.getPassword());
+        return user != null && passwordEncoder.matches(password, user.getPassword());
     }
 
     private void setAuthenticationInSecurityContext(User user){

@@ -38,7 +38,7 @@ public class GoogleOAuthHelper {
                 googleClientId,
                 googleClientSecret,
                 authCode,
-                "http://localhost:5173"
+                "https://lasting-maggot-thankful.ngrok-free.app"
         ).execute();
 
         String idToken = tokenResponse.getIdToken();
