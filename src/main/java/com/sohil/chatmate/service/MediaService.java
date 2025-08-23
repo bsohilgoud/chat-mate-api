@@ -28,21 +28,28 @@ public class MediaService {
     }
 
     public Media saveMediaFile(MultipartFile multipartFile, ContentType contentType) throws IOException {
+        return  saveMediaFile( multipartFile,  contentType, null);
+    }
+
+
+    public Media saveMediaFile(MultipartFile multipartFile, ContentType contentType, String fileName) throws IOException {
 
         File uploadsFolder = new File(MEDIA_FILE_UPLOAD_DIR);
         if (!uploadsFolder.exists()) {
             uploadsFolder.mkdirs();
         }
 
-        String filename = UUID.randomUUID() + "_" + multipartFile.getOriginalFilename();
-        File uploadPath = new File(uploadsFolder, filename);
+        if(fileName == null)
+            fileName = UUID.randomUUID() + "_" + multipartFile.getOriginalFilename();
+
+        File uploadPath = new File(uploadsFolder, fileName);
 
         multipartFile.transferTo(uploadPath);
 
         Media media = Media.builder()
-                .url(MEDIA_FILE_UPLOAD_DIR + filename)
+                .url(MEDIA_FILE_UPLOAD_DIR + fileName)
                 .size(multipartFile.getSize())
-                .name(filename)
+                .name(fileName)
                 .type(contentType.toString())
                 .build();
 

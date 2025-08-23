@@ -69,8 +69,9 @@ public class SecurityConfig {
                 "http://localhost:5173",
                 "http://192.168.0.100:5173",
                 "https://*.ngrok.io",
-                "https://*.ngrok-free.app"
-        ));
+                "https://*.ngrok-free.app",
+                "http://192.168.0.102:5173"
+                ));
         // For production, you'd list your allowed origins
         // configuration.setAllowedOrigins(Arrays.asList("https://yourdomain.com", "https://app.yourdomain.com"));
 

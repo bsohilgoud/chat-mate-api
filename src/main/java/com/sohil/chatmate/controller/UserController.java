@@ -24,6 +24,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -98,9 +101,27 @@ public class UserController {
 
     @PostMapping("/profile/{userId}")
     public ResponseEntity<ApiResponse<Map<String, String>>> updateProfileImage(@PathVariable("userId") String userId, @RequestParam("file") MultipartFile multipartFile, HttpServletRequest httpServletRequest) throws IOException {
-        Media media = mediaService.saveMediaFile(multipartFile, ContentType.IMAGE);
+
+        String originalFilename = multipartFile.getOriginalFilename();
+
+        String extension = "";
+        if (originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf('.'));
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmmssSSS");
+        String newFilename = "profile_" + userId + "_" + LocalDateTime.now().format(formatter) + extension;
+
+        Media media = mediaService.saveMediaFile(multipartFile, ContentType.IMAGE, newFilename);
         userService.updateProfileUrl(userId, media.getUrl());
 
         return ApiResponse.success(HttpStatus.OK.value(), Map.of("profileUrl", media.getUrl()), httpServletRequest.getRequestURI());
     }
+
+    @DeleteMapping("/profile/{userId}")
+    public ResponseEntity<ApiResponse<String>> deleteUserProfileImage(@PathVariable("userId") String userId, HttpServletRequest httpServletRequest) throws IOException {
+        userService.updateProfileUrl(userId, null);
+
+        return ApiResponse.success(HttpStatus.OK.value(), "Successfully removed the profile for user: " + userId, httpServletRequest.getRequestURI());
+    }
+
 }
