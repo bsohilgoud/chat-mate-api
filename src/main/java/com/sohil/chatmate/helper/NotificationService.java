@@ -68,8 +68,6 @@ public class NotificationService {
                 messagingTemplate.convertAndSend("/queue/notification/private/" + toUser, notification);
             else
                 messagingTemplate.convertAndSend("/queue/notification/public", notification);
-
-
         }
     }
 

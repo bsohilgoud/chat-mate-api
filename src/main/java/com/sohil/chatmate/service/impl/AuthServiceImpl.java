@@ -63,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Invalid Credentials!!");
         }
 
+
         setAuthenticationInSecurityContext(user);
 
         String userID = user.getUserId();

@@ -15,6 +15,8 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findUserByUsername(String username);
 
+    Optional<User> findUserByEmail(String email);
+
     @Modifying
     @Transactional
     @Query("UPDATE User u SET u.profileUrl = :profileUrl WHERE u.userId = :userId")

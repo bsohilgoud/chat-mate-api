@@ -13,7 +13,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,11 +51,11 @@ public class MessageController {
     /* TIP: GET /messages/{user_id}
            {user_id} → Path variable (ID of the other user you are chatting with).
            login_person_user_id → Sent in the request body.
-           ❌ Issues with this approach:
+           Issues with this approach:
                - GET requests should not have a body
                - GET requests should not contain a request body because HTTP GET is meant for fetching data.
             Note: Some HTTP clients (browsers, caching systems) ignore or strip bodies from GET requests.
-           ✅ The server can infer login_person_user_id from authentication extract it from the authenticated user.
+           The server can infer login_person_user_id from authentication extract it from the authenticated user.
      */
     @GetMapping("/conversations/{recipientId}")
     public ResponseEntity<ApiResponse<List<UserMessageDTO>>> getConversationForUser(@PathVariable("recipientId") String recipientId) throws Exception {
